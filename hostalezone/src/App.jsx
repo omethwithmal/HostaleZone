@@ -11,6 +11,9 @@ import Rules from "./components/Home/Rules";
 import Rooms from "./components/Home/Rooms";
 import Dmodel from "./components/Home/Dmodel";
 
+import RoomChangeRequest from "./components/RoomChangeRequest/RoomChangeRequest";
+
+
 
 
 // Home Page Component
@@ -50,6 +53,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/external" element={<ExternalView />} />
+        <Route path="/room-change-request" element={<RoomChangeRequest />} />
       </Routes>
     </Router>
   );
