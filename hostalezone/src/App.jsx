@@ -12,6 +12,8 @@ import Rooms from "./components/Home/Rooms";
 import Dmodel from "./components/Home/Dmodel";
 
 import RoomChangeRequest from "./components/RoomChangeRequest/RoomChangeRequest";
+import RoomDetailsForm from "./components/Add Room/RoomDetailsForm";
+import RoomTransferRequest from "./components/RoomTransferRequest ADMIN/RoomTransferRequest";
 
 
 
@@ -54,6 +56,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/external" element={<ExternalView />} />
         <Route path="/room-change-request" element={<RoomChangeRequest />} />
+        <Route path="/RoomDetailsForm" element={<RoomDetailsForm />} />
+        <Route path="/RoomTransferRequest" element={<RoomTransferRequest />} />
       </Routes>
     </Router>
   );
