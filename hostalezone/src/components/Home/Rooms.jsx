@@ -19,115 +19,175 @@ const RoomsPage = () => {
   const roomsData = [
     {
       id: 1,
-      number: '101',
+      roomNumber: '101',
       type: 'Single Room',
-      available: true,
-      price: 'Rs. 24,000',
-      period: 'per month',
+      monthlyPrice: 24000,
+      maximumOccupancy: '1 person',
+      floorNumber: '1st Floor',
       size: '120 sq ft',
-      capacity: '1 person',
-      amenities: ['Private Bathroom', 'Air Conditioning', 'High-Speed WiFi', 'Study Desk', 'Wardrobe', 'Mini Fridge'],
+      description: 'A comfortable single room designed for individual students with modern amenities and natural lighting.',
       images: [
         'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       ],
-      description: 'A comfortable single room designed for individual students.',
+      availability: true,
+      availableFromDate: '2024-03-01',
+      availableToDate: '2024-12-31',
+      roomStatus: 'Available',
+      amenities: [
+        { name: 'Private Bathroom', included: true },
+        { name: 'Air Conditioning', included: true },
+        { name: 'High-Speed WiFi', included: true },
+        { name: 'Study Desks', included: true, count: 1 },
+        { name: 'Storage Lockers', included: true, count: 1 },
+        { name: 'Mini Fridge', included: true }
+      ],
       rating: 4.8,
       reviews: 42
     },
     {
       id: 2,
-      number: '102',
+      roomNumber: '102',
       type: 'Double Room',
-      available: true,
-      price: 'Rs. 36,000',
-      period: 'per month',
+      monthlyPrice: 36000,
+      maximumOccupancy: '2 persons',
+      floorNumber: '1st Floor',
       size: '180 sq ft',
-      capacity: '2 persons',
-      amenities: ['Private Bathroom', 'Air Conditioning', 'High-Speed WiFi', 'Two Study Desks', 'Wardrobes', 'Mini Fridge', 'TV'],
+      description: 'Spacious double room perfect for friends or siblings sharing. Features two separate study areas.',
       images: [
         'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       ],
-      description: 'Spacious double room perfect for friends or siblings.',
+      availability: true,
+      availableFromDate: '2024-03-15',
+      availableToDate: '2024-12-31',
+      roomStatus: 'Available',
+      amenities: [
+        { name: 'Private Bathroom', included: true },
+        { name: 'Air Conditioning', included: true },
+        { name: 'High-Speed WiFi', included: true },
+        { name: 'Study Desks', included: true, count: 2 },
+        { name: 'Storage Lockers', included: true, count: 2 },
+        { name: 'Mini Fridge', included: true }
+      ],
       rating: 4.9,
       reviews: 36
     },
     {
       id: 3,
-      number: '103',
+      roomNumber: '103',
       type: 'Triple Room',
-      available: false,
-      price: 'Rs. 48,000',
-      period: 'per month',
+      monthlyPrice: 48000,
+      maximumOccupancy: '3 persons',
+      floorNumber: '1st Floor',
       size: '220 sq ft',
-      capacity: '3 persons',
-      amenities: ['Private Bathroom', 'Air Conditioning', 'High-Speed WiFi', 'Three Study Desks', 'Storage Lockers', 'Mini Fridge', 'TV'],
+      description: 'Large triple room designed for group living with individual study spaces and ample storage.',
       images: [
         'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       ],
-      description: 'Large triple room designed for group living.',
+      availability: false,
+      availableFromDate: '2024-05-01',
+      availableToDate: '2024-12-31',
+      roomStatus: 'Occupied',
+      amenities: [
+        { name: 'Private Bathroom', included: true },
+        { name: 'Air Conditioning', included: true },
+        { name: 'High-Speed WiFi', included: true },
+        { name: 'Study Desks', included: true, count: 3 },
+        { name: 'Storage Lockers', included: true, count: 3 },
+        { name: 'Mini Fridge', included: true }
+      ],
       rating: 4.7,
       reviews: 28
     },
     {
       id: 4,
-      number: '201',
+      roomNumber: '201',
       type: 'Shared Room',
-      available: true,
-      price: 'Rs. 16,000',
-      period: 'per month',
+      monthlyPrice: 16000,
+      maximumOccupancy: '4 persons',
+      floorNumber: '2nd Floor',
       size: '200 sq ft',
-      capacity: '4 persons',
-      amenities: ['Shared Bathroom', 'Air Conditioning', 'High-Speed WiFi', 'Individual Lockers', 'Study Tables', 'Common Area'],
+      description: 'Economical shared accommodation with individual lockers and common study area.',
       images: [
         'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       ],
-      description: 'Economical shared accommodation with individual lockers.',
+      availability: true,
+      availableFromDate: '2024-03-01',
+      availableToDate: '2024-12-31',
+      roomStatus: 'Available',
+      amenities: [
+        { name: 'Shared Bathroom', included: true },
+        { name: 'Air Conditioning', included: true },
+        { name: 'High-Speed WiFi', included: true },
+        { name: 'Study Desks', included: true, count: 4 },
+        { name: 'Storage Lockers', included: true, count: 4 },
+        { name: 'Mini Fridge', included: true }
+      ],
       rating: 4.5,
       reviews: 51
     },
     {
       id: 5,
-      number: '202',
+      roomNumber: '202',
       type: 'Family Room',
-      available: true,
-      price: 'Rs. 70,000',
-      period: 'per month',
+      monthlyPrice: 70000,
+      maximumOccupancy: '4-5 persons',
+      floorNumber: '2nd Floor',
       size: '350 sq ft',
-      capacity: '4-5 persons',
-      amenities: ['Private Bathroom', 'Air Conditioning', 'High-Speed WiFi', 'Separate Bedrooms', 'Kitchenette', 'Living Area', 'Storage'],
+      description: 'Luxurious family suite with separate living areas and kitchenette for extended stays.',
       images: [
         'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       ],
-      description: 'Luxurious family suite with separate living areas.',
+      availability: true,
+      availableFromDate: '2024-04-01',
+      availableToDate: '2024-12-31',
+      roomStatus: 'Available',
+      amenities: [
+        { name: 'Private Bathroom', included: true },
+        { name: 'Air Conditioning', included: true },
+        { name: 'High-Speed WiFi', included: true },
+        { name: 'Study Desks', included: true, count: 2 },
+        { name: 'Storage Lockers', included: true, count: 4 },
+        { name: 'Mini Fridge', included: true }
+      ],
       rating: 4.9,
       reviews: 19
     },
     {
       id: 6,
-      number: '203',
+      roomNumber: '203',
       type: 'Single Room',
-      available: false,
-      price: 'Rs. 24,000',
-      period: 'per month',
+      monthlyPrice: 24000,
+      maximumOccupancy: '1 person',
+      floorNumber: '2nd Floor',
       size: '120 sq ft',
-      capacity: '1 person',
-      amenities: ['Private Bathroom', 'Air Conditioning', 'High-Speed WiFi', 'Study Desk', 'Wardrobe'],
+      description: 'Standard single room with essential amenities and beautiful city view.',
       images: [
         'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
         'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
       ],
-      description: 'Standard single room with essential amenities.',
+      availability: false,
+      availableFromDate: '2024-06-01',
+      availableToDate: '2024-12-31',
+      roomStatus: 'Maintenance',
+      amenities: [
+        { name: 'Private Bathroom', included: true },
+        { name: 'Air Conditioning', included: true },
+        { name: 'High-Speed WiFi', included: true },
+        { name: 'Study Desks', included: true, count: 1 },
+        { name: 'Storage Lockers', included: true, count: 1 },
+        { name: 'Mini Fridge', included: true }
+      ],
       rating: 4.6,
       reviews: 33
     }
@@ -135,7 +195,7 @@ const RoomsPage = () => {
 
   // Filter rooms based on search and type
   const filteredRooms = roomsData.filter(room => {
-    const matchesSearch = room.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = room.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          room.type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'All' || room.type === selectedType;
     return matchesSearch && matchesType;
@@ -190,14 +250,22 @@ const RoomsPage = () => {
         </svg>
       )
     };
-    return icons[type];
+    return icons[type] || icons['Single Room'];
+  };
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Available': return 'bg-green-100 text-green-800 border-green-200';
+      case 'Occupied': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Maintenance': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Unavailable': return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       
-     
-
       {/* Creative Filter Section - Blue Theme */}
       <section className="py-8 -mt-12 relative z-10">
         <div className="container mx-auto px-6">
@@ -275,7 +343,7 @@ const RoomsPage = () => {
                       <div className="text-4xl font-bold text-blue-700 mb-1">{filteredRooms.length}</div>
                       <div className="text-blue-600 font-medium">Perfect Rooms Found</div>
                       <div className="text-xs text-blue-500 mt-1">
-                        {filteredRooms.filter(r => r.available).length} available now
+                        {filteredRooms.filter(r => r.availability).length} available now
                       </div>
                     </div>
                   </div>
@@ -333,17 +401,17 @@ const RoomsPage = () => {
                   className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer"
                   onClick={() => setSelectedRoom(room)}
                 >
-                  {/* Floating Badges - Blue Theme */}
+                  {/* Floating Badges */}
                   <div className="absolute top-4 left-4 z-10">
-                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${room.available 
+                    <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${room.availability 
                       ? 'bg-blue-600 text-white shadow-lg' 
                       : 'bg-red-500 text-white shadow-lg'}`}>
-                      {room.available ? 'AVAILABLE' : 'BOOKED'}
+                      {room.availability ? 'AVAILABLE' : 'NOT AVAILABLE'}
                     </div>
                   </div>
                   <div className="absolute top-4 right-4 z-10">
                     <div className="px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
-                      <span className="font-bold text-gray-900">#{room.number}</span>
+                      <span className="font-bold text-gray-900">#{room.roomNumber}</span>
                     </div>
                   </div>
 
@@ -351,10 +419,17 @@ const RoomsPage = () => {
                   <div className="relative h-56 overflow-hidden">
                     <img 
                       src={room.images[0]} 
-                      alt={`Room ${room.number}`}
+                      alt={`Room ${room.roomNumber}`}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                    
+                    {/* Floor Badge */}
+                    <div className="absolute bottom-4 left-4">
+                      <div className="px-3 py-1.5 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-medium text-gray-800">
+                        {room.floorNumber}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Room Content */}
@@ -385,19 +460,19 @@ const RoomsPage = () => {
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-600">
-                          {room.price}
+                          Rs. {room.monthlyPrice.toLocaleString()}
                         </div>
-                        <div className="text-sm text-gray-500">{room.period}</div>
+                        <div className="text-sm text-gray-500">per month</div>
                       </div>
                     </div>
 
-                    {/* Room Specs */}
+                    {/* Room Specs Grid */}
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                        <span>{room.capacity}</span>
+                        <span>{room.maximumOccupancy}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,23 +482,30 @@ const RoomsPage = () => {
                       </div>
                     </div>
 
+                    {/* Status Badge */}
+                    <div className="mb-4">
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(room.roomStatus)}`}>
+                        {room.roomStatus}
+                      </span>
+                    </div>
+
                     {/* Amenities Preview */}
                     <div className="mb-6">
                       <div className="flex flex-wrap gap-2">
-                        {room.amenities.slice(0, 2).map((amenity, index) => (
+                        {room.amenities.slice(0, 3).map((amenity, index) => (
                           <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium border border-blue-100">
-                            {amenity}
+                            {amenity.name} {amenity.count ? `(${amenity.count})` : ''}
                           </span>
                         ))}
-                        {room.amenities.length > 2 && (
+                        {room.amenities.length > 3 && (
                           <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
-                            +{room.amenities.length - 2} more
+                            +{room.amenities.length - 3} more
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Creative Button - Blue Only */}
+                    {/* View Details Button */}
                     <button className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl group">
                       <span className="flex items-center justify-center">
                         View Details
@@ -493,9 +575,11 @@ const RoomsPage = () => {
                         <RoomTypeIcon type={selectedRoom.type} />
                       </div>
                       <div>
-                        <h2 className="text-3xl font-bold text-gray-900">Room {selectedRoom.number}</h2>
+                        <h2 className="text-3xl font-bold text-gray-900">Room {selectedRoom.roomNumber}</h2>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-gray-600">{selectedRoom.type}</span>
+                          <span className="text-gray-400">•</span>
+                          <span className="text-gray-600">{selectedRoom.floorNumber}</span>
                           <span className="text-gray-400">•</span>
                           <div className="flex items-center">
                             {[...Array(5)].map((_, i) => (
@@ -514,17 +598,49 @@ const RoomsPage = () => {
                       </div>
                     </div>
                     
-                    {/* Availability Badge - Blue Theme */}
-                    <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold ${selectedRoom.available 
-                      ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-red-100 text-red-800'}`}>
-                      <div className={`w-2 h-2 rounded-full mr-2 ${selectedRoom.available ? 'bg-blue-500' : 'bg-red-500'}`}></div>
-                      {selectedRoom.available ? 'Available for Booking' : 'Currently Unavailable'}
+                    {/* Status Badges */}
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold ${selectedRoom.availability 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-red-100 text-red-800'}`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${selectedRoom.availability ? 'bg-blue-500' : 'bg-red-500'}`}></div>
+                        {selectedRoom.availability ? 'Available for Booking' : 'Currently Unavailable'}
+                      </div>
+                      <div className={`inline-flex items-center px-4 py-2 rounded-full font-bold border ${getStatusColor(selectedRoom.roomStatus)}`}>
+                        Status: {selectedRoom.roomStatus}
+                      </div>
+                    </div>
+
+                    {/* Availability Dates */}
+                    <div className="bg-blue-50 p-4 rounded-xl mb-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-sm text-blue-600 mb-1">Available From</div>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {new Date(selectedRoom.availableFromDate).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-sm text-blue-600 mb-1">Available To</div>
+                          <div className="text-lg font-semibold text-gray-900">
+                            {new Date(selectedRoom.availableToDate).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Image Gallery */}
                   <div className="mb-8">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Room Gallery</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="col-span-2">
                         <div className="relative h-64 rounded-2xl overflow-hidden">
@@ -549,40 +665,51 @@ const RoomsPage = () => {
                     </div>
                   </div>
 
-                  {/* Room Details Grid - Blue Theme */}
+                  {/* Description */}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3">Description</h3>
+                    <p className="text-gray-600 leading-relaxed">{selectedRoom.description}</p>
+                  </div>
+
+                  {/* Room Details Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-blue-50 p-4 rounded-xl">
+                      <div className="text-sm text-blue-600 mb-1">Room Number</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedRoom.roomNumber}</div>
+                    </div>
+                    <div className="bg-blue-50 p-4 rounded-xl">
+                      <div className="text-sm text-blue-600 mb-1">Floor</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedRoom.floorNumber}</div>
+                    </div>
                     <div className="bg-blue-50 p-4 rounded-xl">
                       <div className="text-sm text-blue-600 mb-1">Size</div>
                       <div className="text-lg font-bold text-gray-900">{selectedRoom.size}</div>
                     </div>
                     <div className="bg-blue-50 p-4 rounded-xl">
-                      <div className="text-sm text-blue-600 mb-1">Capacity</div>
-                      <div className="text-lg font-bold text-gray-900">{selectedRoom.capacity}</div>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-xl">
-                      <div className="text-sm text-blue-600 mb-1">Price</div>
-                      <div className="text-lg font-bold text-blue-600">{selectedRoom.price}</div>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded-xl">
-                      <div className="text-sm text-blue-600 mb-1">Status</div>
-                      <div className="text-lg font-bold text-gray-900">
-                        {selectedRoom.available ? 'Available' : 'Booked'}
-                      </div>
+                      <div className="text-sm text-blue-600 mb-1">Max Occupancy</div>
+                      <div className="text-lg font-bold text-gray-900">{selectedRoom.maximumOccupancy}</div>
                     </div>
                   </div>
 
                   {/* Amenities Section */}
                   <div>
                     <h3 className="text-xl font-bold text-gray-900 mb-4">Amenities</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {selectedRoom.amenities.map((amenity, index) => (
-                        <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors">
-                          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                            </svg>
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                            <span className="text-gray-700 font-medium">{amenity.name}</span>
                           </div>
-                          <span className="text-gray-700 font-medium">{amenity}</span>
+                          {amenity.count && (
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium">
+                              {amenity.count} {amenity.count > 1 ? 'units' : 'unit'}
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -595,14 +722,41 @@ const RoomsPage = () => {
                     {/* Price Display - Blue Theme */}
                     <div className="mb-8 text-center">
                       <div className="text-5xl font-bold text-blue-600 mb-2">
-                        {selectedRoom.price}
+                        Rs. {selectedRoom.monthlyPrice.toLocaleString()}
                       </div>
-                      <div className="text-gray-600">{selectedRoom.period}</div>
-                      <div className="text-sm text-gray-500 mt-1">+ Rs. 40,000 security deposit</div>
+                      <div className="text-gray-600">per month</div>
+                      <div className="text-sm text-gray-500 mt-2">+ One-time security deposit: Rs. 40,000</div>
+                    </div>
+
+                    {/* Quick Info */}
+                    <div className="bg-white rounded-xl p-4 mb-6 shadow-sm">
+                      <h4 className="font-semibold text-gray-900 mb-3">Quick Info</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li className="flex justify-between">
+                          <span className="text-gray-600">Room Type:</span>
+                          <span className="font-medium text-gray-900">{selectedRoom.type}</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-gray-600">Room Number:</span>
+                          <span className="font-medium text-gray-900">{selectedRoom.roomNumber}</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-gray-600">Floor:</span>
+                          <span className="font-medium text-gray-900">{selectedRoom.floorNumber}</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-gray-600">Maximum Occupancy:</span>
+                          <span className="font-medium text-gray-900">{selectedRoom.maximumOccupancy}</span>
+                        </li>
+                        <li className="flex justify-between">
+                          <span className="text-gray-600">Size:</span>
+                          <span className="font-medium text-gray-900">{selectedRoom.size}</span>
+                        </li>
+                      </ul>
                     </div>
 
                     {/* Booking Form */}
-                    {selectedRoom.available ? (
+                    {selectedRoom.availability && selectedRoom.roomStatus === 'Available' ? (
                       <form onSubmit={handleBookingSubmit} className="space-y-6">
                         <div>
                           <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -648,6 +802,8 @@ const RoomsPage = () => {
                               type="date"
                               name="checkIn"
                               required
+                              min={selectedRoom.availableFromDate}
+                              max={selectedRoom.availableToDate}
                               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition"
                               value={bookingForm.checkIn}
                               onChange={handleInputChange}
@@ -656,11 +812,16 @@ const RoomsPage = () => {
                               type="date"
                               name="checkOut"
                               required
+                              min={selectedRoom.availableFromDate}
+                              max={selectedRoom.availableToDate}
                               className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-600 focus:ring-4 focus:ring-blue-100 outline-none transition"
                               value={bookingForm.checkOut}
                               onChange={handleInputChange}
                             />
                           </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Available: {new Date(selectedRoom.availableFromDate).toLocaleDateString()} - {new Date(selectedRoom.availableToDate).toLocaleDateString()}
+                          </p>
                         </div>
 
                         <div>
@@ -677,7 +838,7 @@ const RoomsPage = () => {
                           ></textarea>
                         </div>
 
-                        {/* Submit Button - Blue Only */}
+                        {/* Submit Button */}
                         <button
                           type="submit"
                           className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl group"
@@ -698,8 +859,11 @@ const RoomsPage = () => {
                           </svg>
                         </div>
                         <h4 className="text-xl font-bold text-gray-900 mb-2">Currently Unavailable</h4>
-                        <p className="text-gray-600 mb-6">
-                          This room is booked. Check back later or explore other available options.
+                        <p className="text-gray-600 mb-4">
+                          This room is {selectedRoom.roomStatus.toLowerCase()}. 
+                          {selectedRoom.availableFromDate && (
+                            <> Available from {new Date(selectedRoom.availableFromDate).toLocaleDateString()}.</>
+                          )}
                         </p>
                         <button
                           onClick={() => setSelectedRoom(null)}
