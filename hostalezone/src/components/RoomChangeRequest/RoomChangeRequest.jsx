@@ -364,7 +364,7 @@ const RoomChangeRequestForm = () => {
       if (!formData.designation?.trim()) newErrors.designation = 'Designation is required';
     }
     
-    // Hostel validation based on user type and gender
+    // Hostel validation based on user type
     const currentHostel = formData.currentHostelName;
     const preferredHostel = formData.preferredHostel;
     
@@ -374,26 +374,6 @@ const RoomChangeRequestForm = () => {
     
     if (!preferredHostel) newErrors.preferredHostel = 'Preferred hostel is required';
     if (!formData.preferredRoomType) newErrors.preferredRoomType = 'Preferred room type is required';
-    
-    // Gender-based hostel validation
-    if (userType === 'student-male' && currentHostel && !currentHostel.includes('Boys')) {
-      newErrors.currentHostelName = 'Male students can only select Boys Hostel';
-    }
-    if (userType === 'student-female' && currentHostel && !currentHostel.includes('Girls')) {
-      newErrors.currentHostelName = 'Female students can only select Girls Hostel';
-    }
-    if (userType === 'staff') {
-      if (currentHostel && !currentHostel.includes('Staff')) {
-        newErrors.currentHostelName = 'Staff can only select Staff Quarters';
-      }
-      // Additional gender-based validation for staff quarters
-      if (formData.gender === 'Male' && currentHostel && currentHostel.includes('Female')) {
-        newErrors.currentHostelName = 'Male staff cannot select female staff quarters';
-      }
-      if (formData.gender === 'Female' && currentHostel && currentHostel.includes('Male')) {
-        newErrors.currentHostelName = 'Female staff cannot select male staff quarters';
-      }
-    }
     
     if (!formData.reasonForRequest) newErrors.reasonForRequest = 'Please select a reason';
     if (!formData.studentAgreement) newErrors.studentAgreement = 'You must agree to the declaration';
@@ -471,10 +451,10 @@ const RoomChangeRequestForm = () => {
         staffId: '',
         department: '',
         designation: '',
-        currentHostelName: 'Boys Hostel - North',
+        currentHostelName: 'Block A',
         currentRoomNumber: '101',
         currentRoomType: 'Shared',
-        preferredHostel: 'Boys Hostel - South',
+        preferredHostel: 'Block B',
         preferredRoomNumber: '205',
         preferredRoomType: 'Single',
         reasonForRequest: 'Roommate issues',
@@ -493,10 +473,10 @@ const RoomChangeRequestForm = () => {
         staffId: '',
         department: '',
         designation: '',
-        currentHostelName: 'Girls Hostel - East',
+        currentHostelName: 'Block A',
         currentRoomNumber: '303',
         currentRoomType: 'Shared',
-        preferredHostel: 'Girls Hostel - West',
+        preferredHostel: 'Block C',
         preferredRoomNumber: '410',
         preferredRoomType: 'Single',
         reasonForRequest: 'Health reasons',
@@ -515,10 +495,10 @@ const RoomChangeRequestForm = () => {
         staffId: 'STF/2020/089',
         department: 'Computer Science',
         designation: 'Senior Lecturer',
-        currentHostelName: 'Staff Quarters - Block A (Mixed)',
+        currentHostelName: 'Block A',
         currentRoomNumber: '12',
         currentRoomType: 'Single',
-        preferredHostel: 'Staff Quarters - Block B (Mixed)',
+        preferredHostel: 'Block B',
         preferredRoomNumber: '25',
         preferredRoomType: 'AC',
         reasonForRequest: 'Distance to classes',
@@ -530,23 +510,7 @@ const RoomChangeRequestForm = () => {
   };
 
   const getHostelOptions = () => {
-    switch(userType) {
-      case 'student-male':
-        return ['Boys Hostel - North', 'Boys Hostel - South', 'Boys Hostel - East', 'Boys Hostel - West', 'Boys Hostel - Central'];
-      case 'student-female':
-        return ['Girls Hostel - North', 'Girls Hostel - South', 'Girls Hostel - East', 'Girls Hostel - West', 'Girls Hostel - Central'];
-      case 'staff':
-        return [
-          'Staff Quarters - Block A (Mixed)',
-          'Staff Quarters - Block B (Mixed)',
-          'Staff Quarters - Block C (Male)',
-          'Staff Quarters - Block D (Female)',
-          'Staff Quarters - Block E (Mixed)',
-          'Staff Quarters - Block F (Family)'
-        ];
-      default:
-        return [];
-    }
+    return ['Block A', 'Block B', 'Block C', 'Block D', 'Block E'];
   };
 
   return (
