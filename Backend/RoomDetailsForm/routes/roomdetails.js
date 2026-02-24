@@ -1,7 +1,7 @@
 // routes/roomDetailsRoutes.js
 const express = require("express");
 const router = express.Router();
-const RoomDetails = require("../models/RoomDetails");
+const RoomDetails = require("../models/roomdetail");
 
 
 // =============================
