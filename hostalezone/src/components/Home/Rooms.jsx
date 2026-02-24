@@ -1,10 +1,13 @@
 // RoomsPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const RoomsPage = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('All');
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [bookingForm, setBookingForm] = useState({
     name: '',
     email: '',
@@ -14,205 +17,151 @@ const RoomsPage = () => {
     specialRequests: ''
   });
 
-  const roomTypes = ['All', 'Single Room', 'Double Room', 'Triple Room', 'Shared Room', 'Family Room'];
+  const roomTypes = ['All', 'Single', 'Shared'];
 
-  const roomsData = [
-    {
-      id: 1,
-      roomNumber: '101',
-      type: 'Single Room',
-      monthlyPrice: 24000,
-      maximumOccupancy: '1 person',
-      floorNumber: '1st Floor',
-      size: '120 sq ft',
-      description: 'A comfortable single room designed for individual students with modern amenities and natural lighting.',
-      images: [
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-      ],
-      availability: true,
-      availableFromDate: '2024-03-01',
-      availableToDate: '2024-12-31',
-      roomStatus: 'Available',
-      amenities: [
-        { name: 'Private Bathroom', included: true },
-        { name: 'Air Conditioning', included: true },
-        { name: 'High-Speed WiFi', included: true },
-        { name: 'Study Desks', included: true, count: 1 },
-        { name: 'Storage Lockers', included: true, count: 1 },
-        { name: 'Mini Fridge', included: true }
-      ],
-      rating: 4.8,
-      reviews: 42
-    },
-    {
-      id: 2,
-      roomNumber: '102',
-      type: 'Double Room',
-      monthlyPrice: 36000,
-      maximumOccupancy: '2 persons',
-      floorNumber: '1st Floor',
-      size: '180 sq ft',
-      description: 'Spacious double room perfect for friends or siblings sharing. Features two separate study areas.',
-      images: [
-        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-      ],
-      availability: true,
-      availableFromDate: '2024-03-15',
-      availableToDate: '2024-12-31',
-      roomStatus: 'Available',
-      amenities: [
-        { name: 'Private Bathroom', included: true },
-        { name: 'Air Conditioning', included: true },
-        { name: 'High-Speed WiFi', included: true },
-        { name: 'Study Desks', included: true, count: 2 },
-        { name: 'Storage Lockers', included: true, count: 2 },
-        { name: 'Mini Fridge', included: true }
-      ],
-      rating: 4.9,
-      reviews: 36
-    },
-    {
-      id: 3,
-      roomNumber: '103',
-      type: 'Triple Room',
-      monthlyPrice: 48000,
-      maximumOccupancy: '3 persons',
-      floorNumber: '1st Floor',
-      size: '220 sq ft',
-      description: 'Large triple room designed for group living with individual study spaces and ample storage.',
-      images: [
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-      ],
-      availability: false,
-      availableFromDate: '2024-05-01',
-      availableToDate: '2024-12-31',
-      roomStatus: 'Occupied',
-      amenities: [
-        { name: 'Private Bathroom', included: true },
-        { name: 'Air Conditioning', included: true },
-        { name: 'High-Speed WiFi', included: true },
-        { name: 'Study Desks', included: true, count: 3 },
-        { name: 'Storage Lockers', included: true, count: 3 },
-        { name: 'Mini Fridge', included: true }
-      ],
-      rating: 4.7,
-      reviews: 28
-    },
-    {
-      id: 4,
-      roomNumber: '201',
-      type: 'Shared Room',
-      monthlyPrice: 16000,
-      maximumOccupancy: '4 persons',
-      floorNumber: '2nd Floor',
-      size: '200 sq ft',
-      description: 'Economical shared accommodation with individual lockers and common study area.',
-      images: [
-        'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-      ],
-      availability: true,
-      availableFromDate: '2024-03-01',
-      availableToDate: '2024-12-31',
-      roomStatus: 'Available',
-      amenities: [
-        { name: 'Shared Bathroom', included: true },
-        { name: 'Air Conditioning', included: true },
-        { name: 'High-Speed WiFi', included: true },
-        { name: 'Study Desks', included: true, count: 4 },
-        { name: 'Storage Lockers', included: true, count: 4 },
-        { name: 'Mini Fridge', included: true }
-      ],
-      rating: 4.5,
-      reviews: 51
-    },
-    {
-      id: 5,
-      roomNumber: '202',
-      type: 'Family Room',
-      monthlyPrice: 70000,
-      maximumOccupancy: '4-5 persons',
-      floorNumber: '2nd Floor',
-      size: '350 sq ft',
-      description: 'Luxurious family suite with separate living areas and kitchenette for extended stays.',
-      images: [
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-      ],
-      availability: true,
-      availableFromDate: '2024-04-01',
-      availableToDate: '2024-12-31',
-      roomStatus: 'Available',
-      amenities: [
-        { name: 'Private Bathroom', included: true },
-        { name: 'Air Conditioning', included: true },
-        { name: 'High-Speed WiFi', included: true },
-        { name: 'Study Desks', included: true, count: 2 },
-        { name: 'Storage Lockers', included: true, count: 4 },
-        { name: 'Mini Fridge', included: true }
-      ],
-      rating: 4.9,
-      reviews: 19
-    },
-    {
-      id: 6,
-      roomNumber: '203',
-      type: 'Single Room',
-      monthlyPrice: 24000,
-      maximumOccupancy: '1 person',
-      floorNumber: '2nd Floor',
-      size: '120 sq ft',
-      description: 'Standard single room with essential amenities and beautiful city view.',
-      images: [
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-      ],
-      availability: false,
-      availableFromDate: '2024-06-01',
-      availableToDate: '2024-12-31',
-      roomStatus: 'Maintenance',
-      amenities: [
-        { name: 'Private Bathroom', included: true },
-        { name: 'Air Conditioning', included: true },
-        { name: 'High-Speed WiFi', included: true },
-        { name: 'Study Desks', included: true, count: 1 },
-        { name: 'Storage Lockers', included: true, count: 1 },
-        { name: 'Mini Fridge', included: true }
-      ],
-      rating: 4.6,
-      reviews: 33
+  // Fetch rooms from backend
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:8070/roomdetails/display');
+      if (!response.ok) {
+        throw new Error('Failed to fetch rooms');
+      }
+      const data = await response.json();
+      console.log('Fetched rooms:', data); // Debug log
+      
+      // Transform backend data to match frontend structure
+      const transformedRooms = data.map(room => ({
+        id: room._id,
+        roomNumber: room.roomNumber || room.roomId,
+        type: room.roomType === 'single' ? 'Single Room' : 'Shared Room',
+        monthlyPrice: room.monthlyPrice || 0,
+        maximumOccupancy: room.maxOccupancy ? `${room.maxOccupancy} person${room.maxOccupancy > 1 ? 's' : ''}` : '1 person',
+        floorNumber: room.floorNumber ? `${room.floorNumber}${getFloorSuffix(room.floorNumber)} Floor` : 'Ground Floor',
+        size: room.size ? `${room.size} sq ft` : '120 sq ft',
+        description: room.description || 'Comfortable room with modern amenities.',
+        // Images from backend - if no images, use placeholders
+        images: room.images && room.images.length > 0 
+          ? room.images 
+          : [
+              'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+            ],
+        availability: room.status === 'available',
+        availableFromDate: room.availableFrom ? new Date(room.availableFrom).toISOString().split('T')[0] : '2024-03-01',
+        availableToDate: room.availableTo ? new Date(room.availableTo).toISOString().split('T')[0] : '2024-12-31',
+        roomStatus: room.status ? room.status.charAt(0).toUpperCase() + room.status.slice(1) : 'Available',
+        amenities: transformAmenities(room.amenities || {}),
+        rating: 4.5, // Default rating since not in schema
+        reviews: Math.floor(Math.random() * 50) + 10 // Random reviews count
+      }));
+      
+      setRooms(transformedRooms);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error fetching rooms:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  // Helper function to get floor suffix
+  const getFloorSuffix = (floor) => {
+    if (floor === 1) return 'st';
+    if (floor === 2) return 'nd';
+    if (floor === 3) return 'rd';
+    return 'th';
+  };
+
+  // Helper function to transform amenities
+  const transformAmenities = (amenities) => {
+    const amenityList = [];
+    
+    if (amenities.privateBathroom) {
+      amenityList.push({ name: 'Private Bathroom', included: true });
+    }
+    if (amenities.airConditioning) {
+      amenityList.push({ name: 'Air Conditioning', included: true });
+    }
+    if (amenities.highSpeedWifi) {
+      amenityList.push({ name: 'High-Speed WiFi', included: true });
+    }
+    if (amenities.studyDesks > 0) {
+      amenityList.push({ name: 'Study Desks', included: true, count: amenities.studyDesks });
+    }
+    if (amenities.storageLockers) {
+      amenityList.push({ name: 'Storage Lockers', included: true, count: 1 });
+    }
+    if (amenities.miniFridge) {
+      amenityList.push({ name: 'Mini Fridge', included: true });
+    }
+    if (amenities.tv) {
+      amenityList.push({ name: 'TV', included: true });
+    }
+    if (amenities.balcony) {
+      amenityList.push({ name: 'Balcony', included: true });
+    }
+    if (amenities.microwave) {
+      amenityList.push({ name: 'Microwave', included: true });
+    }
+    if (amenities.washingMachine) {
+      amenityList.push({ name: 'Washing Machine', included: true });
+    }
+    if (amenities.waterHeater) {
+      amenityList.push({ name: 'Water Heater', included: true });
+    }
+    if (amenities.parking) {
+      amenityList.push({ name: 'Parking', included: true });
+    }
+
+    // If no amenities, add default ones
+    if (amenityList.length === 0) {
+      amenityList.push(
+        { name: 'Basic Furniture', included: true },
+        { name: 'Study Desk', included: true, count: 1 },
+        { name: 'Storage', included: true }
+      );
+    }
+
+    return amenityList;
+  };
 
   // Filter rooms based on search and type
-  const filteredRooms = roomsData.filter(room => {
+  const filteredRooms = rooms.filter(room => {
     const matchesSearch = room.roomNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          room.type.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = selectedType === 'All' || room.type === selectedType;
+    const matchesType = selectedType === 'All' || 
+                       (selectedType === 'Single' && room.type === 'Single Room') ||
+                       (selectedType === 'Shared' && room.type === 'Shared Room');
     return matchesSearch && matchesType;
   });
 
-  const handleBookingSubmit = (e) => {
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    alert('Booking request submitted successfully! We will contact you shortly.');
-    setSelectedRoom(null);
-    setBookingForm({
-      name: '',
-      email: '',
-      phone: '',
-      checkIn: '',
-      checkOut: '',
-      specialRequests: ''
-    });
+    
+    try {
+      // Here you would typically send the booking data to your backend
+      // For now, we'll just show an alert
+      alert('Booking request submitted successfully! We will contact you shortly.');
+      
+      setSelectedRoom(null);
+      setBookingForm({
+        name: '',
+        email: '',
+        phone: '',
+        checkIn: '',
+        checkOut: '',
+        specialRequests: ''
+      });
+    } catch (error) {
+      alert('Error submitting booking. Please try again.');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -229,24 +178,9 @@ const RoomsPage = () => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      'Double Room': (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-      'Triple Room': (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13 0a9 9 0 11-18 0 9 9 0 0118 0zM13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      ),
       'Shared Room': (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      ),
-      'Family Room': (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13 0a9 9 0 11-18 0 9 9 0 0118 0zM16 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
       )
     };
@@ -262,6 +196,44 @@ const RoomsPage = () => {
       default: return 'bg-blue-100 text-blue-800 border-blue-200';
     }
   };
+
+  // Function to handle image error - if image fails to load, show placeholder
+  const handleImageError = (e) => {
+    e.target.src = 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading rooms...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 mx-auto mb-6 bg-red-50 rounded-full flex items-center justify-center">
+            <svg className="w-12 h-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Rooms</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={fetchRooms}
+            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -415,12 +387,13 @@ const RoomsPage = () => {
                     </div>
                   </div>
 
-                  {/* Room Image with Overlay */}
+                  {/* Room Image with Overlay - Using backend images */}
                   <div className="relative h-56 overflow-hidden">
                     <img 
                       src={room.images[0]} 
                       alt={`Room ${room.roomNumber}`}
                       className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+                      onError={handleImageError}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
                     
@@ -638,30 +611,47 @@ const RoomsPage = () => {
                     </div>
                   </div>
 
-                  {/* Image Gallery */}
+                  {/* Image Gallery - Using all backend images */}
                   <div className="mb-8">
                     <h3 className="text-xl font-bold text-gray-900 mb-4">Room Gallery</h3>
                     <div className="grid grid-cols-2 gap-4">
+                      {/* Main large image - first image */}
                       <div className="col-span-2">
                         <div className="relative h-64 rounded-2xl overflow-hidden">
                           <img 
                             src={selectedRoom.images[0]} 
                             alt="Main room view"
                             className="w-full h-full object-cover"
+                            onError={handleImageError}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                         </div>
                       </div>
-                      {selectedRoom.images.slice(1).map((img, index) => (
+                      {/* Additional images - show up to 2 more */}
+                      {selectedRoom.images.slice(1, 3).map((img, index) => (
                         <div key={index} className="relative h-40 rounded-xl overflow-hidden group">
                           <img 
                             src={img} 
                             alt={`Room view ${index + 2}`}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onError={handleImageError}
                           />
                           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </div>
                       ))}
+                      {/* If less than 3 images, show placeholders */}
+                      {selectedRoom.images.length < 3 && (
+                        [...Array(3 - selectedRoom.images.length)].map((_, index) => (
+                          <div key={`placeholder-${index}`} className="relative h-40 rounded-xl overflow-hidden group">
+                            <img 
+                              src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                              alt="Placeholder"
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
 
