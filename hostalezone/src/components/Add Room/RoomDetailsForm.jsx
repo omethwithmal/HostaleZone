@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const RoomDetailsForm = () => {
@@ -32,45 +32,8 @@ const RoomDetailsForm = () => {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
   
-  // Frontend only rooms data - NOT connected to backend
-  const [rooms, setRooms] = useState([
-    {
-      id: 1,
-      roomNumber: 'A-101',
-      monthlyPrice: '25000',
-      roomType: 'single',
-      maxOccupancy: '2',
-      floorNumber: '1',
-      size: '220',
-      status: 'available',
-      amenities: ['privateBathroom', 'airConditioning', 'highSpeedWifi'],
-      images: []
-    },
-    {
-      id: 2,
-      roomNumber: 'B-204',
-      monthlyPrice: '18000',
-      roomType: 'shared',
-      maxOccupancy: '3',
-      floorNumber: '2',
-      size: '280',
-      status: 'occupied',
-      amenities: ['highSpeedWifi', 'studyDesks', 'storageLockers'],
-      images: []
-    },
-    {
-      id: 3,
-      roomNumber: 'C-312',
-      monthlyPrice: '32000',
-      roomType: 'single',
-      maxOccupancy: '1',
-      floorNumber: '3',
-      size: '180',
-      status: 'maintenance',
-      amenities: ['privateBathroom', 'tv', 'miniFridge', 'balcony'],
-      images: []
-    }
-  ]);
+  // Rooms data - will be fetched from backend
+  const [rooms, setRooms] = useState([]);
 
   const [editingId, setEditingId] = useState(null);
   const [hoveredButton, setHoveredButton] = useState(null);
@@ -78,8 +41,28 @@ const RoomDetailsForm = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Base URL for API - ONLY for form submission
+  // Base URL for API
   const API_BASE_URL = 'http://localhost:8070/roomdetails';
+
+  // Fetch all rooms on component mount
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  // Fetch rooms from backend
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/display`);
+      setRooms(response.data);
+      setError('');
+    } catch (err) {
+      setError('Error fetching rooms: ' + (err.response?.data?.message || err.message));
+      console.error('Error fetching rooms:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -116,7 +99,7 @@ const RoomDetailsForm = () => {
     });
   };
 
-  // This function ONLY submits to backend - doesn't update the frontend table
+  // Submit to backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -146,113 +129,82 @@ const RoomDetailsForm = () => {
         amenities: roomData.amenities
       };
       
-      // Send to backend ONLY - doesn't affect frontend table
-      const response = await axios.post(`${API_BASE_URL}/add`, roomDataToSend);
-
-      console.log('Room saved to backend successfully:', response.data);
+      let response;
       
-      // Show success message
-      setSuccess('Room added to backend successfully!');
+      if (editingId) {
+        // Update existing room
+        response = await axios.put(`${API_BASE_URL}/update/${editingId}`, roomDataToSend);
+        setSuccess('Room updated successfully!');
+      } else {
+        // Add new room
+        response = await axios.post(`${API_BASE_URL}/add`, roomDataToSend);
+        setSuccess('Room added successfully!');
+      }
+
+      console.log('Room saved successfully:', response.data);
+      
+      // Refresh rooms list
+      await fetchRooms();
       
       // Reset form
       resetForm();
+      setEditingId(null);
       
     } catch (err) {
-      setError('Error saving room to backend: ' + (err.response?.data?.message || err.message));
-      console.error('Error saving room to backend:', err);
+      setError('Error saving room: ' + (err.response?.data?.message || err.message));
+      console.error('Error saving room:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // These functions handle the frontend table ONLY - NOT connected to backend
-  const handleAddToFrontend = () => {
-    // Validate form
-    if (!roomData.roomNumber || !roomData.monthlyPrice || !roomData.maxOccupancy || !roomData.floorNumber || !roomData.size) {
-      setError('Please fill in all required fields');
-      return;
-    }
-
-    // Add to frontend table only
-    const newRoom = {
-      id: rooms.length + 1,
-      roomNumber: roomData.roomNumber,
-      monthlyPrice: roomData.monthlyPrice,
-      roomType: roomData.roomType,
-      maxOccupancy: roomData.maxOccupancy,
-      floorNumber: roomData.floorNumber,
-      size: roomData.size,
-      description: roomData.description,
-      availableFrom: roomData.availableFrom,
-      availableTo: roomData.availableTo,
-      status: roomData.status,
-      amenities: Object.keys(roomData.amenities).filter(key => roomData.amenities[key] === true || (key === 'studyDesks' && roomData.amenities[key] > 0)),
-      images: uploadedImages
-    };
-
-    setRooms([...rooms, newRoom]);
-    resetForm();
-    setSuccess('Room added to frontend table successfully!');
-  };
-
-  const handleEdit = (room) => {
-    setEditingId(room.id);
+  const handleEdit = async (room) => {
+    setEditingId(room._id || room.id);
     
-    // Convert amenities array back to object
+    // Format amenities for form
     const amenitiesObj = {
-      privateBathroom: room.amenities.includes('privateBathroom'),
-      airConditioning: room.amenities.includes('airConditioning'),
-      highSpeedWifi: room.amenities.includes('highSpeedWifi'),
-      studyDesks: room.amenities.includes('studyDesks') ? 1 : 0,
-      storageLockers: room.amenities.includes('storageLockers'),
-      miniFridge: room.amenities.includes('miniFridge'),
-      tv: room.amenities.includes('tv'),
-      balcony: room.amenities.includes('balcony'),
-      microwave: room.amenities.includes('microwave'),
-      washingMachine: room.amenities.includes('washingMachine'),
-      waterHeater: room.amenities.includes('waterHeater'),
-      parking: room.amenities.includes('parking')
+      privateBathroom: room.amenities?.privateBathroom || false,
+      airConditioning: room.amenities?.airConditioning || false,
+      highSpeedWifi: room.amenities?.highSpeedWifi || false,
+      studyDesks: room.amenities?.studyDesks || 0,
+      storageLockers: room.amenities?.storageLockers || false,
+      miniFridge: room.amenities?.miniFridge || false,
+      tv: room.amenities?.tv || false,
+      balcony: room.amenities?.balcony || false,
+      microwave: room.amenities?.microwave || false,
+      washingMachine: room.amenities?.washingMachine || false,
+      waterHeater: room.amenities?.waterHeater || false,
+      parking: room.amenities?.parking || false
     };
 
     setRoomData({
-      monthlyPrice: room.monthlyPrice,
-      roomNumber: room.roomNumber,
-      roomType: room.roomType,
-      maxOccupancy: room.maxOccupancy,
-      floorNumber: room.floorNumber,
-      size: room.size,
+      monthlyPrice: room.monthlyPrice || '',
+      roomNumber: room.roomNumber || '',
+      roomType: room.roomType || 'single',
+      maxOccupancy: room.maxOccupancy || '',
+      floorNumber: room.floorNumber || '',
+      size: room.size || '',
       description: room.description || '',
-      availableFrom: room.availableFrom || '',
-      availableTo: room.availableTo || '',
-      status: room.status,
+      availableFrom: room.availableFrom ? room.availableFrom.split('T')[0] : '',
+      availableTo: room.availableTo ? room.availableTo.split('T')[0] : '',
+      status: room.status || 'available',
       amenities: amenitiesObj
     });
   };
 
-  const handleUpdateInFrontend = () => {
-    if (!editingId) return;
-
-    // Update room in frontend table
-    setRooms(rooms.map(room => 
-      room.id === editingId 
-        ? { 
-            ...room, 
-            ...roomData,
-            amenities: Object.keys(roomData.amenities).filter(key => roomData.amenities[key] === true || (key === 'studyDesks' && roomData.amenities[key] > 0)),
-            images: uploadedImages 
-          }
-        : room
-    ));
-
-    resetForm();
-    setEditingId(null);
-    setSuccess('Room updated in frontend table successfully!');
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this room from frontend?')) {
-      setRooms(rooms.filter(room => room.id !== id));
-      setSuccess('Room deleted from frontend table successfully!');
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this room?')) {
+      try {
+        setLoading(true);
+        await axios.delete(`${API_BASE_URL}/delete/${id}`);
+        setSuccess('Room deleted successfully!');
+        await fetchRooms();
+      } catch (err) {
+        setError('Error deleting room: ' + (err.response?.data?.message || err.message));
+        console.error('Error deleting room:', err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -318,7 +270,7 @@ const RoomDetailsForm = () => {
     }
   };
 
-  // Amenity icons mapping
+  // Amenity icons mapping (keep as is)
   const amenityIcons = {
     privateBathroom: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -454,7 +406,7 @@ const RoomDetailsForm = () => {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Saving to backend...
+            Processing...
           </div>
         )}
 
@@ -675,30 +627,17 @@ const RoomDetailsForm = () => {
                   )}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="mt-6 flex justify-end space-x-3">
-                  {/* Add to Frontend Button (Table only) */}
+                {/* Submit Button */}
+                <div className="mt-6 flex justify-end">
                   <button
-                    type="button"
-                    onClick={handleAddToFrontend}
-                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    type="submit"
+                    disabled={loading}
+                    className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Add to Table
-                  </button>
-
-                  {/* Submit to Backend Button */}
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    {editingId ? 'Update in Backend' : 'Submit to Backend'}
+                    {editingId ? 'Update Room' : 'Add Room'}
                   </button>
                 </div>
               </form>
@@ -934,7 +873,7 @@ const RoomDetailsForm = () => {
           </div>
         </div>
 
-        {/* Rooms Table - Frontend Only */}
+        {/* Rooms Table - From Backend */}
         <div className="mt-8">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600">
@@ -942,7 +881,7 @@ const RoomDetailsForm = () => {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                Room Details List (Frontend Only)
+                Room Details List
               </h2>
             </div>
             
@@ -963,7 +902,7 @@ const RoomDetailsForm = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {rooms.map((room, index) => (
-                    <tr key={room.id} className="group hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300">
+                    <tr key={room._id || room.id} className="group hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-300">
                       <td className="px-4 py-4 align-top">
                         <span className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 group-hover:bg-white rounded-lg text-xs font-medium text-gray-600 transition-colors">
                           {index + 1}
@@ -988,7 +927,7 @@ const RoomDetailsForm = () => {
                         <div className="text-sm text-gray-600">{room.size} sq.ft</div>
                       </td>
                       <td className="px-4 py-4 align-top">
-                        <div className="text-sm text-gray-600">{room.maxOccupancy} {room.maxOccupancy === '1' ? 'Person' : 'Persons'}</div>
+                        <div className="text-sm text-gray-600">{room.maxOccupancy} {room.maxOccupancy === 1 ? 'Person' : 'Persons'}</div>
                       </td>
                       <td className="px-4 py-4 align-top">
                         <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium shadow-md ${getStatusColor(room.status)}`}>
@@ -1001,7 +940,7 @@ const RoomDetailsForm = () => {
                           <div className="relative">
                             <button
                               onClick={() => handleEdit(room)}
-                              onMouseEnter={() => setHoveredButton(`edit-${room.id}`)}
+                              onMouseEnter={() => setHoveredButton(`edit-${room._id || room.id}`)}
                               onMouseLeave={() => setHoveredButton(null)}
                               className="p-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-110"
                               title="Edit Room"
@@ -1012,7 +951,7 @@ const RoomDetailsForm = () => {
                             </button>
                             
                             {/* Tooltip */}
-                            {hoveredButton === `edit-${room.id}` && (
+                            {hoveredButton === `edit-${room._id || room.id}` && (
                               <div className="absolute left-1/2 transform -translate-x-1/2 -top-8 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-20 animate-fadeIn">
                                 Edit Room
                               </div>
@@ -1022,8 +961,8 @@ const RoomDetailsForm = () => {
                           {/* Delete Button */}
                           <div className="relative">
                             <button
-                              onClick={() => handleDelete(room.id)}
-                              onMouseEnter={() => setHoveredButton(`delete-${room.id}`)}
+                              onClick={() => handleDelete(room._id || room.id)}
+                              onMouseEnter={() => setHoveredButton(`delete-${room._id || room.id}`)}
                               onMouseLeave={() => setHoveredButton(null)}
                               className="p-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-110"
                               title="Delete Room"
@@ -1034,7 +973,7 @@ const RoomDetailsForm = () => {
                             </button>
                             
                             {/* Tooltip */}
-                            {hoveredButton === `delete-${room.id}` && (
+                            {hoveredButton === `delete-${room._id || room.id}` && (
                               <div className="absolute left-1/2 transform -translate-x-1/2 -top-8 bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-20 animate-fadeIn">
                                 Delete Room
                               </div>
@@ -1048,7 +987,7 @@ const RoomDetailsForm = () => {
               </table>
             </div>
 
-            {rooms.length === 0 && (
+            {rooms.length === 0 && !loading && (
               <div className="text-center py-12">
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
