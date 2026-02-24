@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^1.12.51",
+    "axios": "^1.13.5",
     "framer-motion": "^12.33.0",
     "jspdf": "^4.1.0",
     "jspdf-autotable": "^5.0.7",

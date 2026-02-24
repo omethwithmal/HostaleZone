@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 const RoomDetailsForm = () => {
   const [roomData, setRoomData] = useState({
@@ -30,6 +31,8 @@ const RoomDetailsForm = () => {
 
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
+  
+  // Frontend only rooms data - NOT connected to backend
   const [rooms, setRooms] = useState([
     {
       id: 1,
@@ -71,6 +74,12 @@ const RoomDetailsForm = () => {
 
   const [editingId, setEditingId] = useState(null);
   const [hoveredButton, setHoveredButton] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Base URL for API - ONLY for form submission
+  const API_BASE_URL = 'http://localhost:8070/roomdetails';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -107,62 +116,83 @@ const RoomDetailsForm = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  // This function ONLY submits to backend - doesn't update the frontend table
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingId) {
-      // Update existing room
-      setRooms(rooms.map(room => 
-        room.id === editingId 
-          ? { 
-              ...room, 
-              ...roomData,
-              amenities: Object.keys(roomData.amenities).filter(key => roomData.amenities[key]),
-              images: uploadedImages 
-            }
-          : room
-      ));
-      setEditingId(null);
-    } else {
-      // Add new room
-      const newRoom = {
-        id: rooms.length + 1,
-        ...roomData,
-        amenities: Object.keys(roomData.amenities).filter(key => roomData.amenities[key]),
-        images: uploadedImages
-      };
-      setRooms([...rooms, newRoom]);
+    // Basic validation
+    if (!roomData.roomNumber || !roomData.monthlyPrice || !roomData.maxOccupancy || !roomData.floorNumber || !roomData.size) {
+      setError('Please fill in all required fields');
+      return;
     }
 
-    // Reset form
-    setRoomData({
-      monthlyPrice: '',
-      roomNumber: '',
-      roomType: 'single',
-      maxOccupancy: '',
-      floorNumber: '',
-      size: '',
-      description: '',
-      availableFrom: '',
-      availableTo: '',
-      status: 'available',
-      amenities: {
-        privateBathroom: false,
-        airConditioning: false,
-        highSpeedWifi: false,
-        studyDesks: 0,
-        storageLockers: false,
-        miniFridge: false,
-        tv: false,
-        balcony: false,
-        microwave: false,
-        washingMachine: false,
-        waterHeater: false,
-        parking: false
-      }
-    });
-    setUploadedImages([]);
-    setImagePreview([]);
+    try {
+      setLoading(true);
+      setError('');
+      setSuccess('');
+      
+      // Create room data object
+      const roomDataToSend = {
+        roomNumber: roomData.roomNumber,
+        monthlyPrice: parseFloat(roomData.monthlyPrice),
+        roomType: roomData.roomType,
+        maxOccupancy: parseInt(roomData.maxOccupancy),
+        floorNumber: parseInt(roomData.floorNumber),
+        size: parseInt(roomData.size),
+        description: roomData.description,
+        availableFrom: roomData.availableFrom,
+        availableTo: roomData.availableTo,
+        status: roomData.status,
+        amenities: roomData.amenities
+      };
+      
+      // Send to backend ONLY - doesn't affect frontend table
+      const response = await axios.post(`${API_BASE_URL}/add`, roomDataToSend);
+
+      console.log('Room saved to backend successfully:', response.data);
+      
+      // Show success message
+      setSuccess('Room added to backend successfully!');
+      
+      // Reset form
+      resetForm();
+      
+    } catch (err) {
+      setError('Error saving room to backend: ' + (err.response?.data?.message || err.message));
+      console.error('Error saving room to backend:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // These functions handle the frontend table ONLY - NOT connected to backend
+  const handleAddToFrontend = () => {
+    // Validate form
+    if (!roomData.roomNumber || !roomData.monthlyPrice || !roomData.maxOccupancy || !roomData.floorNumber || !roomData.size) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    // Add to frontend table only
+    const newRoom = {
+      id: rooms.length + 1,
+      roomNumber: roomData.roomNumber,
+      monthlyPrice: roomData.monthlyPrice,
+      roomType: roomData.roomType,
+      maxOccupancy: roomData.maxOccupancy,
+      floorNumber: roomData.floorNumber,
+      size: roomData.size,
+      description: roomData.description,
+      availableFrom: roomData.availableFrom,
+      availableTo: roomData.availableTo,
+      status: roomData.status,
+      amenities: Object.keys(roomData.amenities).filter(key => roomData.amenities[key] === true || (key === 'studyDesks' && roomData.amenities[key] > 0)),
+      images: uploadedImages
+    };
+
+    setRooms([...rooms, newRoom]);
+    resetForm();
+    setSuccess('Room added to frontend table successfully!');
   };
 
   const handleEdit = (room) => {
@@ -199,10 +229,67 @@ const RoomDetailsForm = () => {
     });
   };
 
+  const handleUpdateInFrontend = () => {
+    if (!editingId) return;
+
+    // Update room in frontend table
+    setRooms(rooms.map(room => 
+      room.id === editingId 
+        ? { 
+            ...room, 
+            ...roomData,
+            amenities: Object.keys(roomData.amenities).filter(key => roomData.amenities[key] === true || (key === 'studyDesks' && roomData.amenities[key] > 0)),
+            images: uploadedImages 
+          }
+        : room
+    ));
+
+    resetForm();
+    setEditingId(null);
+    setSuccess('Room updated in frontend table successfully!');
+  };
+
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this room?')) {
+    if (window.confirm('Are you sure you want to delete this room from frontend?')) {
       setRooms(rooms.filter(room => room.id !== id));
+      setSuccess('Room deleted from frontend table successfully!');
     }
+  };
+
+  const resetForm = () => {
+    setRoomData({
+      monthlyPrice: '',
+      roomNumber: '',
+      roomType: 'single',
+      maxOccupancy: '',
+      floorNumber: '',
+      size: '',
+      description: '',
+      availableFrom: '',
+      availableTo: '',
+      status: 'available',
+      amenities: {
+        privateBathroom: false,
+        airConditioning: false,
+        highSpeedWifi: false,
+        studyDesks: 0,
+        storageLockers: false,
+        miniFridge: false,
+        tv: false,
+        balcony: false,
+        microwave: false,
+        washingMachine: false,
+        waterHeater: false,
+        parking: false
+      }
+    });
+    setUploadedImages([]);
+    setImagePreview([]);
+    setError('');
+  };
+
+  const handleGoToDashboard = () => {
+    window.location.href = '/dashboard';
   };
 
   const getStatusColor = (status) => {
@@ -231,11 +318,7 @@ const RoomDetailsForm = () => {
     }
   };
 
-  const handleGoToDashboard = () => {
-    window.location.href = '/dashboard';
-  };
-
-  // Amenity icons mapping (same as before)
+  // Amenity icons mapping
   const amenityIcons = {
     privateBathroom: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,7 +397,7 @@ const RoomDetailsForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Header Section with Dashboard Button */}
+      {/* Header Section */}
       <div className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
@@ -345,6 +428,36 @@ const RoomDetailsForm = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Alert Messages */}
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {success}
+          </div>
+        )}
+
+        {/* Loading Indicator */}
+        {loading && (
+          <div className="fixed top-4 right-4 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center">
+            <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Saving to backend...
+          </div>
+        )}
+
         {/* Progress Bar */}
         <div className="mb-8 max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-2">
@@ -501,7 +614,7 @@ const RoomDetailsForm = () => {
                     />
                   </div>
 
-                  <div className="md:col-span-3">
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Description
                     </label>
@@ -548,6 +661,7 @@ const RoomDetailsForm = () => {
                             className="w-full h-32 object-cover rounded-xl shadow-md group-hover:shadow-lg transition-all duration-200"
                           />
                           <button
+                            type="button"
                             onClick={() => removeImage(index)}
                             className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-600"
                           >
@@ -561,23 +675,37 @@ const RoomDetailsForm = () => {
                   )}
                 </div>
 
-                {/* Submit Button */}
-                <div className="mt-6 flex justify-end">
+                {/* Action Buttons */}
+                <div className="mt-6 flex justify-end space-x-3">
+                  {/* Add to Frontend Button (Table only) */}
                   <button
-                    type="submit"
-                    className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    type="button"
+                    onClick={handleAddToFrontend}
+                    className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                   >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    {editingId ? 'Update Room' : 'Add Room'}
+                    Add to Table
+                  </button>
+
+                  {/* Submit to Backend Button */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    {editingId ? 'Update in Backend' : 'Submit to Backend'}
                   </button>
                 </div>
               </form>
             </div>
           </div>
 
-          {/* Right Column - Sidebar */}
+          {/* Right Column - Sidebar (Keep all the sidebar content as before) */}
           <div className="space-y-6">
             {/* Availability Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
@@ -806,7 +934,7 @@ const RoomDetailsForm = () => {
           </div>
         </div>
 
-        {/* Rooms Table */}
+        {/* Rooms Table - Frontend Only */}
         <div className="mt-8">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600">
@@ -814,7 +942,7 @@ const RoomDetailsForm = () => {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
-                Room Details List
+                Room Details List (Frontend Only)
               </h2>
             </div>
             
@@ -934,24 +1062,6 @@ const RoomDetailsForm = () => {
           </div>
         </div>
       </div>
-
-      {/* Add custom animation styles */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateX(-50%) translateY(5px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-out;
-        }
-      `}</style>
     </div>
   );
 };
