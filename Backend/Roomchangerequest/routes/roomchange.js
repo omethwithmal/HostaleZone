@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const RoomChangeRequest = require("../models/RoomChangeRequest");
+const RoomChangeRequest = require("../models/roomchang");
 
 
 // =============================
