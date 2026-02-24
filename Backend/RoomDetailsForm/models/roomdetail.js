@@ -1,6 +1,4 @@
-// models/RoomDetails.js
 const mongoose = require('mongoose');
-
 const { Schema } = mongoose;
 
 const roomDetailsSchema = new Schema(
@@ -14,55 +12,44 @@ const roomDetailsSchema = new Schema(
         return 'RM-' + Date.now().toString().slice(-6);
       }
     },
-
     // Basic Information
     roomNumber: {
       type: String,
       trim: true
     },
-
     monthlyPrice: {
       type: Number
     },
-
     roomType: {
       type: String,
       enum: ['single', 'shared']
     },
-
     maxOccupancy: {
       type: Number
     },
-
     floorNumber: {
       type: Number
     },
-
     size: {
       type: Number // sq.ft
     },
-
     description: {
       type: String,
       trim: true
     },
-
     // Availability
     availableFrom: {
       type: Date
     },
-
     availableTo: {
       type: Date
     },
-
     // Room Status
     status: {
       type: String,
       enum: ['available', 'occupied', 'maintenance', 'unavailable'],
       default: 'available'
     },
-
     // Amenities
     amenities: {
       privateBathroom: { type: Boolean, default: false },
@@ -78,7 +65,6 @@ const roomDetailsSchema = new Schema(
       waterHeater: { type: Boolean, default: false },
       parking: { type: Boolean, default: false }
     },
-
     // Images (store image URLs or file paths)
     images: [
       {
