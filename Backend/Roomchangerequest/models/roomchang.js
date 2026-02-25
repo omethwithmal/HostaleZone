@@ -6,27 +6,28 @@ const roomChangeRequestSchema = new Schema({
     // Request ID (auto generated)
     requestId: {
         type: String,
-        unique: true
+        unique: true,
+        required: false
     },
 
     // User Type
     userType: {
         type: String,
-        required: true,
+        required: false,
         enum: ['student-male', 'student-female', 'staff']
     },
 
     // Common Fields
-    registrationNumber: { type: String, required: true, trim: true },
-    fullName: { type: String, required: true, trim: true },
-    nicIdNumber: { type: String, required: true, trim: true },
-    contactNumber: { type: String, required: true, trim: true },
-    emailAddress: { type: String, required: true, trim: true },
+    registrationNumber: { type: String, required: false, trim: true },
+    fullName: { type: String, required: false, trim: true },
+    nicIdNumber: { type: String, required: false, trim: true },
+    contactNumber: { type: String, required: false, trim: true },
+    emailAddress: { type: String, required: false, trim: true },
 
     // Gender
     gender: {
         type: String,
-        required: true,
+        required: false,
         enum: ['Male', 'Female']
     },
 
@@ -36,28 +37,36 @@ const roomChangeRequestSchema = new Schema({
     designation: { type: String, trim: true },
 
     // Current Room
-    currentHostelName: { type: String, required: true, trim: true },
-    currentRoomNumber: { type: String, required: true, trim: true },
+    currentHostelName: { type: String, required: false, trim: true },
+    currentRoomNumber: { type: String, required: false, trim: true },
     currentRoomType: {
         type: String,
-        required: true,
+        required: false,
         enum: ['Single', 'Shared', 'Dormitory', 'AC', 'Non-AC', 'Family']
     },
 
     // Preferred Room
-    preferredHostel: { type: String, required: true, trim: true },
+    preferredHostel: { type: String, required: false, trim: true },
     preferredRoomNumber: { type: String, trim: true },
     preferredRoomType: {
         type: String,
-        required: true,
+        required: false,
         enum: ['Single', 'Shared', 'Dormitory', 'AC', 'Non-AC', 'Family']
     },
 
     // Reason
     reasonForRequest: {
         type: String,
-        required: true,
-        enum: ['Noise issues', 'Health reasons', 'Roommate issues', 'Distance to classes', 'Safety reasons', 'Family accommodation', 'Other']
+        required: false,
+        enum: [
+            'Noise issues',
+            'Health reasons',
+            'Roommate issues',
+            'Distance to classes',
+            'Safety reasons',
+            'Family accommodation',
+            'Other'
+        ]
     },
     otherReason: { type: String, trim: true },
 
@@ -100,21 +109,31 @@ const roomChangeRequestSchema = new Schema({
 }, { timestamps: true });
 
 
+// =============================
 // Generate Request ID
+// =============================
 function generateRequestId(userType, gender) {
-    const prefix = userType === 'student-male' ? 'SMB' :
-                   userType === 'student-female' ? 'SFM' : 'STF';
+    const prefix =
+        userType === 'student-male' ? 'SMB' :
+        userType === 'student-female' ? 'SFM' :
+        'STF';
+
     const genderPrefix = gender === 'Male' ? 'M' : 'F';
-    const timestamp = Date.now().toString().slice(-8);
-    return `${prefix}${genderPrefix}-${timestamp}`;
+
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 100);
+
+    return `${prefix}${genderPrefix}-${timestamp}${random}`;
 }
 
-// Auto generate before save
-roomChangeRequestSchema.pre('save', function(next) {
+
+// =============================
+// PRE SAVE HOOK
+// =============================
+roomChangeRequestSchema.pre("save", function () {
     if (!this.requestId) {
         this.requestId = generateRequestId(this.userType, this.gender);
     }
-    next();
 });
 
 module.exports = mongoose.model('RoomChangeRequest', roomChangeRequestSchema);

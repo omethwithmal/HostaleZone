@@ -15,6 +15,8 @@ import RoomChangeRequest from "./components/RoomChangeRequest/RoomChangeRequest"
 import RoomDetailsForm from "./components/Add Room/RoomDetailsForm";
 import RoomTransferRequest from "./components/RoomTransferRequest ADMIN/RoomTransferRequest";
 import RoomManagementDashboard from "./components/RoomManagementDashboard/RoomManagementDashboard";
+import RoomManageMentNavebar from "./components/RoomManageMentNavebar/RoomManageMentNavebar";
+import RoomManagementSidebar from "./components/RoomManageMentNavebar/RoomManagementSidebar";
 
 
 
@@ -61,6 +63,8 @@ function App() {
         <Route path="/RoomDetailsForm" element={<RoomDetailsForm />} />
         <Route path="/RoomTransferRequest" element={<RoomTransferRequest />} />
         <Route path="/RoomManagementDashboard" element={<RoomManagementDashboard />} />
+        <Route path="/RoomManageMentNavebar" element={<RoomManageMentNavebar />} />
+        <Route path="/RoomManagementSidebar" element={<RoomManagementSidebar />} />
       </Routes>
     </Router>
   );
