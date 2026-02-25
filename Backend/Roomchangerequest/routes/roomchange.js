@@ -17,7 +17,7 @@ router.post("/add", async (req, res) => {
         });
 
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
     }
 });
 
@@ -27,8 +27,11 @@ router.post("/add", async (req, res) => {
 // =============================
 router.get("/display", async (req, res) => {
     try {
-        const requests = await RoomChangeRequest.find().sort({ createdAt: -1 });
+        const requests = await RoomChangeRequest.find()
+            .sort({ createdAt: -1 });
+
         res.json(requests);
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -36,13 +39,17 @@ router.get("/display", async (req, res) => {
 
 
 // =============================
-// Get Single by Mongo ID
+// Get Single
 // =============================
 router.get("/view/:id", async (req, res) => {
     try {
         const request = await RoomChangeRequest.findById(req.params.id);
-        if (!request) return res.status(404).json({ error: "Not found" });
+
+        if (!request)
+            return res.status(404).json({ error: "Not found" });
+
         res.json(request);
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -57,12 +64,16 @@ router.put("/approve/:id", async (req, res) => {
 
     try {
         const request = await RoomChangeRequest.findById(req.params.id);
-        if (!request) return res.status(404).json({ error: "Not found" });
+
+        if (!request)
+            return res.status(404).json({ error: "Not found" });
 
         request.status = "Approved";
         request.reviewedAt = new Date();
         request.approvedBy = approvedBy || "Admin";
-        if (newRoomAllocated) request.newRoomAllocated = newRoomAllocated;
+
+        if (newRoomAllocated)
+            request.newRoomAllocated = newRoomAllocated;
 
         await request.save();
 
@@ -85,7 +96,9 @@ router.put("/reject/:id", async (req, res) => {
 
     try {
         const request = await RoomChangeRequest.findById(req.params.id);
-        if (!request) return res.status(404).json({ error: "Not found" });
+
+        if (!request)
+            return res.status(404).json({ error: "Not found" });
 
         request.status = "Rejected";
         request.reviewedAt = new Date();
@@ -113,9 +126,12 @@ router.post("/comment/:id", async (req, res) => {
 
     try {
         const request = await RoomChangeRequest.findById(req.params.id);
-        if (!request) return res.status(404).json({ error: "Not found" });
+
+        if (!request)
+            return res.status(404).json({ error: "Not found" });
 
         request.adminComments.push({ comment, commentedBy });
+
         await request.save();
 
         res.json({ message: "Comment added", comments: request.adminComments });
@@ -132,8 +148,12 @@ router.post("/comment/:id", async (req, res) => {
 router.delete("/delete/:id", async (req, res) => {
     try {
         const deleted = await RoomChangeRequest.findByIdAndDelete(req.params.id);
-        if (!deleted) return res.status(404).json({ error: "Not found" });
+
+        if (!deleted)
+            return res.status(404).json({ error: "Not found" });
+
         res.json({ message: "Deleted successfully" });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

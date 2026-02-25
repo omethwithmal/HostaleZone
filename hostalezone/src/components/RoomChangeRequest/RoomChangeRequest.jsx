@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const RoomChangeRequestForm = () => {
-  const [userType, setUserType] = useState('student-male'); // Default: student-male
+  const [userType, setUserType] = useState('student-male');
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState(null);
   
   // User type selector component
   const UserTypeSelector = () => (
@@ -270,6 +273,7 @@ const RoomChangeRequestForm = () => {
     setSubmitted(false);
     setRequestId(null);
     setErrors({});
+    setApiError(null);
   }, [userType]);
 
   // Calculate form completion progress
@@ -382,7 +386,8 @@ const RoomChangeRequestForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  // API call to submit form
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -394,13 +399,57 @@ const RoomChangeRequestForm = () => {
       }
       return;
     }
-    
-    const prefix = userType === 'student-male' ? 'SMB' : userType === 'student-female' ? 'SFM' : 'STF';
-    const genderPrefix = formData.gender === 'Male' ? 'M' : 'F';
-    const newRequestId = prefix + genderPrefix + '-' + Date.now().toString().substring(7);
-    setRequestId(newRequestId);
-    setSubmitted(true);
-    console.log('Form submitted:', formData);
+
+    setLoading(true);
+    setApiError(null);
+
+    // Prepare data for API
+    const submitData = {
+      userType: userType,
+      registrationNumber: formData.registrationNumber,
+      fullName: formData.fullName,
+      nicIdNumber: formData.nicIdNumber,
+      contactNumber: formData.contactNumber,
+      emailAddress: formData.emailAddress,
+      gender: formData.gender,
+      ...(userType === 'staff' && {
+        staffId: formData.staffId,
+        department: formData.department,
+        designation: formData.designation
+      }),
+      currentHostelName: formData.currentHostelName,
+      currentRoomNumber: formData.currentRoomNumber,
+      currentRoomType: formData.currentRoomType,
+      preferredHostel: formData.preferredHostel,
+      preferredRoomNumber: formData.preferredRoomNumber || undefined,
+      preferredRoomType: formData.preferredRoomType,
+      reasonForRequest: formData.reasonForRequest,
+      ...(formData.reasonForRequest === 'Other' && { otherReason: formData.otherReason }),
+      priorityLevel: formData.priorityLevel,
+      studentAgreement: formData.studentAgreement,
+      status: 'Pending'
+    };
+
+    try {
+      const response = await axios.post('http://localhost:8070/roomchange/add', submitData);
+      
+      if (response.data && response.data.requestId) {
+        setRequestId(response.data.requestId);
+        setSubmitted(true);
+        console.log('Form submitted successfully:', response.data);
+        
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setApiError(
+        err.response?.data?.error || 
+        'Failed to submit request. Please check your connection and try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -437,6 +486,7 @@ const RoomChangeRequestForm = () => {
     setSubmitted(false);
     setRequestId(null);
     setErrors({});
+    setApiError(null);
   };
 
   const fillSampleData = () => {
@@ -589,6 +639,22 @@ const RoomChangeRequestForm = () => {
           </button>
         </div>
 
+        {/* API Error Message */}
+        {apiError && (
+          <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{apiError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Success Message */}
         {submitted && (
           <div className={`mb-8 success-message bg-${theme.primaryLight} border-l-4 border-${theme.primaryMedium} p-6 rounded-lg shadow-md`}>
@@ -612,6 +678,9 @@ const RoomChangeRequestForm = () => {
                   <div className={`inline-block bg-${theme.primaryLight} text-${theme.primaryDark} font-mono font-bold text-lg px-4 py-2 rounded-lg border border-${theme.primaryMedium}`}>
                     {requestId}
                   </div>
+                  <p className="mt-4 text-sm">
+                    You can track the status of your request using this ID. The admin will review your request shortly.
+                  </p>
                 </div>
               </div>
             </div>
@@ -651,7 +720,8 @@ const RoomChangeRequestForm = () => {
                     name="registrationNumber"
                     value={formData.registrationNumber}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.registrationNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} transition duration-200`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.registrationNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} transition duration-200 ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder={`Enter ${userType === 'staff' ? 'staff ID' : 'registration number'}`}
                   />
                   {errors.registrationNumber && (
@@ -668,7 +738,8 @@ const RoomChangeRequestForm = () => {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.fullName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.fullName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="Enter your full name"
                   />
                   {errors.fullName && (
@@ -691,6 +762,7 @@ const RoomChangeRequestForm = () => {
                           value="Male"
                           checked={formData.gender === 'Male'}
                           onChange={handleInputChange}
+                          disabled={submitted}
                           className="hidden peer"
                         />
                         <label 
@@ -699,7 +771,7 @@ const RoomChangeRequestForm = () => {
                             formData.gender === 'Male' 
                               ? 'border-purple-500 bg-purple-50'
                               : 'border-gray-200 hover:bg-gray-50'
-                          }`}
+                          } ${submitted ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <svg className={`w-5 h-5 mr-2 ${
                             formData.gender === 'Male' 
@@ -719,6 +791,7 @@ const RoomChangeRequestForm = () => {
                           value="Female"
                           checked={formData.gender === 'Female'}
                           onChange={handleInputChange}
+                          disabled={submitted}
                           className="hidden peer"
                         />
                         <label 
@@ -727,7 +800,7 @@ const RoomChangeRequestForm = () => {
                             formData.gender === 'Female' 
                               ? 'border-purple-500 bg-purple-50'
                               : 'border-gray-200 hover:bg-gray-50'
-                          }`}
+                          } ${submitted ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                           <svg className={`w-5 h-5 mr-2 ${
                             formData.gender === 'Female' 
@@ -767,7 +840,8 @@ const RoomChangeRequestForm = () => {
                     name="nicIdNumber"
                     value={formData.nicIdNumber}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.nicIdNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.nicIdNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="Enter NIC/ID number"
                   />
                   {errors.nicIdNumber && (
@@ -784,7 +858,8 @@ const RoomChangeRequestForm = () => {
                     name="contactNumber"
                     value={formData.contactNumber}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.contactNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.contactNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="Enter contact number"
                   />
                   {errors.contactNumber && (
@@ -801,7 +876,8 @@ const RoomChangeRequestForm = () => {
                     name="emailAddress"
                     value={formData.emailAddress}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.emailAddress ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.emailAddress ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="Enter email address"
                   />
                   {errors.emailAddress && (
@@ -821,7 +897,8 @@ const RoomChangeRequestForm = () => {
                         name="staffId"
                         value={formData.staffId}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border ${errors.staffId ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                        disabled={submitted}
+                        className={`w-full px-4 py-3 border ${errors.staffId ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                         placeholder="Enter staff ID"
                       />
                       {errors.staffId && (
@@ -837,7 +914,8 @@ const RoomChangeRequestForm = () => {
                         name="department"
                         value={formData.department}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border ${errors.department ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                        disabled={submitted}
+                        className={`w-full px-4 py-3 border ${errors.department ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                       >
                         <option value="">Select Department</option>
                         <option value="Computer Science">Computer Science</option>
@@ -860,7 +938,8 @@ const RoomChangeRequestForm = () => {
                         name="designation"
                         value={formData.designation}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border ${errors.designation ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                        disabled={submitted}
+                        className={`w-full px-4 py-3 border ${errors.designation ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                       >
                         <option value="">Select Designation</option>
                         <option value="Professor">Professor</option>
@@ -902,7 +981,8 @@ const RoomChangeRequestForm = () => {
                     name="currentHostelName"
                     value={formData.currentHostelName}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.currentHostelName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.currentHostelName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Current Hostel</option>
                     {getHostelOptions().map(hostel => (
@@ -923,7 +1003,8 @@ const RoomChangeRequestForm = () => {
                     name="currentRoomNumber"
                     value={formData.currentRoomNumber}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.currentRoomNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.currentRoomNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="E.g., 101, 202A"
                   />
                   {errors.currentRoomNumber && (
@@ -939,7 +1020,8 @@ const RoomChangeRequestForm = () => {
                     name="currentRoomType"
                     value={formData.currentRoomType}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.currentRoomType ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.currentRoomType ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Room Type</option>
                     <option value="Single">Single</option>
@@ -983,7 +1065,8 @@ const RoomChangeRequestForm = () => {
                     name="preferredHostel"
                     value={formData.preferredHostel}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.preferredHostel ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.preferredHostel ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Preferred Hostel</option>
                     {getHostelOptions().map(hostel => (
@@ -1004,7 +1087,8 @@ const RoomChangeRequestForm = () => {
                     name="preferredRoomNumber"
                     value={formData.preferredRoomNumber}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="E.g., 305, 410B (Optional)"
                   />
                 </div>
@@ -1017,7 +1101,8 @@ const RoomChangeRequestForm = () => {
                     name="preferredRoomType"
                     value={formData.preferredRoomType}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border ${errors.preferredRoomType ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium}`}
+                    disabled={submitted}
+                    className={`w-full px-4 py-3 border ${errors.preferredRoomType ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Room Type</option>
                     <option value="Single">Single</option>
@@ -1073,12 +1158,12 @@ const RoomChangeRequestForm = () => {
                         value={reason.value}
                         checked={formData.reasonForRequest === reason.value}
                         onChange={handleInputChange}
-                        required
+                        disabled={submitted}
                         className="hidden peer"
                       />
                       <label 
                         htmlFor={`reason-${reason.value}`} 
-                        className={`flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-${theme.primaryMedium} peer-checked:bg-${theme.primaryLight} hover:bg-gray-50 transition-all duration-200`}
+                        className={`flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-${theme.primaryMedium} peer-checked:bg-${theme.primaryLight} hover:bg-gray-50 transition-all duration-200 ${submitted ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         <span className="text-sm font-medium text-gray-700">{reason.value}</span>
                       </label>
@@ -1099,8 +1184,9 @@ const RoomChangeRequestForm = () => {
                     name="otherReason"
                     value={formData.otherReason}
                     onChange={handleInputChange}
+                    disabled={submitted}
                     rows="3"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="Please provide details about your reason for room change"
                   />
                 </div>
@@ -1119,11 +1205,12 @@ const RoomChangeRequestForm = () => {
                       value="Normal"
                       checked={formData.priorityLevel === 'Normal'}
                       onChange={handleInputChange}
+                      disabled={submitted}
                       className="hidden peer"
                     />
                     <label 
                       htmlFor="priority-normal" 
-                      className="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50"
+                      className={`flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-green-500 peer-checked:bg-green-50 hover:bg-gray-50 ${submitted ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="w-4 h-4 rounded-full border-2 border-gray-300 peer-checked:border-green-500 peer-checked:bg-green-500 mr-3"></div>
                       <div>
@@ -1141,11 +1228,12 @@ const RoomChangeRequestForm = () => {
                       value="Urgent"
                       checked={formData.priorityLevel === 'Urgent'}
                       onChange={handleInputChange}
+                      disabled={submitted}
                       className="hidden peer"
                     />
                     <label 
                       htmlFor="priority-urgent" 
-                      className="flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50"
+                      className={`flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-red-500 peer-checked:bg-red-50 hover:bg-gray-50 ${submitted ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="w-4 h-4 rounded-full border-2 border-gray-300 peer-checked:border-red-500 peer-checked:bg-red-500 mr-3"></div>
                       <div>
@@ -1180,8 +1268,8 @@ const RoomChangeRequestForm = () => {
                           type="checkbox"
                           checked={formData.studentAgreement}
                           onChange={handleInputChange}
-                          required
-                          className={`h-5 w-5 text-${theme.primaryMedium} focus:ring-${theme.primaryMedium} border-gray-300 rounded mt-1`}
+                          disabled={submitted}
+                          className={`h-5 w-5 text-${theme.primaryMedium} focus:ring-${theme.primaryMedium} border-gray-300 rounded mt-1 ${submitted ? 'opacity-50 cursor-not-allowed' : ''}`}
                         />
                         <label htmlFor="student-agreement" className="ml-3 block">
                           <span className="text-lg font-medium text-gray-800">I agree to the above declaration</span>
@@ -1202,7 +1290,8 @@ const RoomChangeRequestForm = () => {
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-8 py-3.5 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition duration-200 mb-4 md:mb-0 flex items-center"
+                disabled={loading}
+                className="px-8 py-3.5 border-2 border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition duration-200 mb-4 md:mb-0 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
@@ -1214,8 +1303,8 @@ const RoomChangeRequestForm = () => {
                 <button
                   type="button"
                   onClick={() => setShowPreview(true)}
-                  disabled={!formData.studentAgreement}
-                  className={`px-8 py-3.5 border-2 border-${theme.primaryMedium} text-${theme.primaryMedium} font-medium rounded-lg transition duration-200 flex items-center ${!formData.studentAgreement ? 'opacity-50 cursor-not-allowed' : `hover:bg-${theme.primaryLight}`}`}
+                  disabled={!formData.studentAgreement || loading}
+                  className={`px-8 py-3.5 border-2 border-${theme.primaryMedium} text-${theme.primaryMedium} font-medium rounded-lg transition duration-200 flex items-center ${(!formData.studentAgreement || loading) ? 'opacity-50 cursor-not-allowed' : `hover:bg-${theme.primaryLight}`}`}
                 >
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
@@ -1225,13 +1314,25 @@ const RoomChangeRequestForm = () => {
                 
                 <button
                   type="submit"
-                  disabled={!formData.studentAgreement || submitted}
-                  className={`px-10 py-3.5 bg-${theme.primaryMedium} text-white font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-${theme.primaryMedium} focus:ring-offset-2 flex items-center ${(!formData.studentAgreement || submitted) ? 'opacity-50 cursor-not-allowed' : `hover:bg-${theme.primaryDark}`}`}
+                  disabled={!formData.studentAgreement || submitted || loading}
+                  className={`px-10 py-3.5 bg-${theme.primaryMedium} text-white font-medium rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-${theme.primaryMedium} focus:ring-offset-2 flex items-center ${(!formData.studentAgreement || submitted || loading) ? 'opacity-50 cursor-not-allowed' : `hover:bg-${theme.primaryDark}`}`}
                 >
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Submit Request
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Submit Request
+                    </>
+                  )}
                 </button>
               </div>
             </div>
