@@ -2,9 +2,70 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const RoomChangeRequestForm = () => {
+  // Toxic words list for filtering
+  const toxicWords = [
+    // English profanity
+    'fuck', 'shit', 'asshole', 'bitch', 'damn', 'crap', 'dick', 'pussy',
+    'cunt', 'bastard', 'whore', 'slut', 'motherfucker', 'fucker', 'nigga',
+    'nigger', 'retard', 'fag', 'faggot', 'cock', 'prick', 'twat', 'wanker',
+    
+    // Sinhala profanity (common ones)
+    'හක්ක', 'හක්කො', 'අම්මගෙ', 'තාත්තගෙ', 'අම්මෝ', 'අපොයි', 'කොන්ඩේ',
+    'උකුණා', 'බන්', 'හොරා', 'මගුලක්', 'මගු', 'ඇහැට', 'ඇහැටුවා',
+    
+    // Tamil profanity (common ones)
+    'கறி', 'பொண்டாட்டி', 'மூடி', 'தாயோளி', 'புண்டை', 'சனியன்',
+    
+    // Threatening words
+    'kill', 'murder', 'suicide', 'attack', 'bomb', 'threat', 'danger',
+    'මරනවා', 'මරා', 'කපනවා', 'ගිනි', 'බෝම්බ',
+    
+    // Hate speech
+    'hate', 'racist', 'terrorist', 'වෛරය', 'වෙනස්කම්'
+  ];
+
+  // Check if text contains toxic words
+  const containsToxicContent = (text) => {
+    if (!text) return false;
+    const lowerText = text.toLowerCase();
+    return toxicWords.some(word => lowerText.includes(word.toLowerCase()));
+  };
+
+  // Get toxic words found in text
+  const getToxicWordsFound = (text) => {
+    if (!text) return [];
+    const lowerText = text.toLowerCase();
+    return toxicWords.filter(word => lowerText.includes(word.toLowerCase()));
+  };
+
+  // Validation functions
+  const validateNIC = (nic) => {
+    if (!nic) return false;
+    // Pattern for NIC: 9 digits + V or 12 digits
+    const nicPattern = /^([0-9]{9}[Vv]$|^[0-9]{12}$)/;
+    return nicPattern.test(nic);
+  };
+
+  const validateContactNumber = (number) => {
+    if (!number) return false;
+    // Pattern: Exactly 10 digits (Sri Lankan mobile/phone numbers)
+    const contactPattern = /^[0-9]{10}$/;
+    return contactPattern.test(number);
+  };
+
+  const validateEmail = (email) => {
+    if (!email) return false;
+    // Standard email pattern with @ symbol
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(email);
+  };
+
   const [userType, setUserType] = useState('student-male');
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
+  const [showToxicPopup, setShowToxicPopup] = useState(false);
+  const [toxicWordsFound, setToxicWordsFound] = useState([]);
+  const [toxicText, setToxicText] = useState('');
   
   // User type selector component
   const UserTypeSelector = () => (
@@ -93,7 +154,7 @@ const RoomChangeRequestForm = () => {
             setUserType('staff');
             setFormData(prev => ({
               ...prev,
-              gender: 'Male' // Default gender for staff
+              gender: 'Male'
             }));
           }}
           className={`p-4 rounded-xl border-2 transition-all duration-300 flex items-center ${
@@ -203,7 +264,7 @@ const RoomChangeRequestForm = () => {
     emailAddress: '',
     
     // Gender Field (only visible for staff)
-    gender: 'Male', // Default gender
+    gender: 'Male',
     
     // Staff Specific
     staffId: '',
@@ -245,7 +306,7 @@ const RoomChangeRequestForm = () => {
     } else if (userType === 'student-female') {
       defaultGender = 'Female';
     } else if (userType === 'staff') {
-      defaultGender = 'Male'; // Default for staff
+      defaultGender = 'Male';
     }
     
     setFormData(prev => ({
@@ -279,38 +340,31 @@ const RoomChangeRequestForm = () => {
   // Calculate form completion progress
   useEffect(() => {
     let completed = 0;
-    const totalFields = userType === 'staff' ? 16 : 15; // Staff has extra fields (gender + staff fields)
+    const totalFields = userType === 'staff' ? 16 : 15;
     
-    // Common Fields
     if (formData.registrationNumber) completed++;
     if (formData.fullName) completed++;
     if (formData.nicIdNumber) completed++;
     if (formData.contactNumber) completed++;
     if (formData.emailAddress) completed++;
     
-    // Gender field only counts for staff
     if (userType === 'staff' && formData.gender) completed++;
     
-    // Staff specific fields
     if (userType === 'staff') {
       if (formData.staffId) completed++;
       if (formData.department) completed++;
       if (formData.designation) completed++;
     }
     
-    // Current Room
     if (formData.currentHostelName) completed++;
     if (formData.currentRoomNumber) completed++;
     if (formData.currentRoomType) completed++;
     
-    // Requested Room
     if (formData.preferredHostel) completed++;
     if (formData.preferredRoomType) completed++;
     
-    // Reason
     if (formData.reasonForRequest) completed++;
     
-    // Agreement
     if (formData.studentAgreement) completed++;
     
     setProgress(Math.round((completed / totalFields) * 100));
@@ -340,25 +394,54 @@ const RoomChangeRequestForm = () => {
     }
   };
 
+  const validateToxicContent = () => {
+    // Check otherReason field if it exists and if reason is "Other"
+    if (formData.reasonForRequest === 'Other' && formData.otherReason && containsToxicContent(formData.otherReason)) {
+      const foundWords = getToxicWordsFound(formData.otherReason);
+      setToxicWordsFound(foundWords);
+      setToxicText(formData.otherReason);
+      setShowToxicPopup(true);
+      return false;
+    }
+    return true;
+  };
+
   const validateForm = () => {
     const newErrors = {};
     
     // Common validation
-    if (!formData.registrationNumber?.trim()) newErrors.registrationNumber = `${userType === 'staff' ? 'Staff ID' : 'Registration number'} is required`;
-    if (!formData.fullName?.trim()) newErrors.fullName = 'Full name is required';
-    if (!formData.nicIdNumber?.trim()) newErrors.nicIdNumber = 'NIC/ID number is required';
-    if (!formData.contactNumber?.trim()) newErrors.contactNumber = 'Contact number is required';
+    if (!formData.registrationNumber?.trim()) {
+      newErrors.registrationNumber = `${userType === 'staff' ? 'Staff ID' : 'Registration number'} is required`;
+    }
+    
+    if (!formData.fullName?.trim()) {
+      newErrors.fullName = 'Full name is required';
+    }
+    
+    // NIC validation
+    if (!formData.nicIdNumber?.trim()) {
+      newErrors.nicIdNumber = 'NIC/ID number is required';
+    } else if (!validateNIC(formData.nicIdNumber)) {
+      newErrors.nicIdNumber = 'Please enter a valid NIC number (9 digits + V or 12 digits)';
+    }
+    
+    // Contact number validation
+    if (!formData.contactNumber?.trim()) {
+      newErrors.contactNumber = 'Contact number is required';
+    } else if (!validateContactNumber(formData.contactNumber)) {
+      newErrors.contactNumber = 'Please enter a valid 10-digit contact number';
+    }
     
     // Gender validation only for staff
     if (userType === 'staff' && !formData.gender) {
       newErrors.gender = 'Gender is required';
     }
     
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Email validation
     if (!formData.emailAddress?.trim()) {
       newErrors.emailAddress = 'Email is required';
-    } else if (!emailRegex.test(formData.emailAddress)) {
-      newErrors.emailAddress = 'Please enter a valid email address';
+    } else if (!validateEmail(formData.emailAddress)) {
+      newErrors.emailAddress = 'Please enter a valid email address (must contain @ symbol)';
     }
     
     // Staff specific validation
@@ -368,22 +451,88 @@ const RoomChangeRequestForm = () => {
       if (!formData.designation?.trim()) newErrors.designation = 'Designation is required';
     }
     
-    // Hostel validation based on user type
-    const currentHostel = formData.currentHostelName;
-    const preferredHostel = formData.preferredHostel;
+    // Hostel validation - Hide Block D and E from options
+    const availableHostels = ['Block A', 'Block B', 'Block C'];
     
-    if (!currentHostel) newErrors.currentHostelName = 'Current hostel is required';
-    if (!formData.currentRoomNumber?.trim()) newErrors.currentRoomNumber = 'Current room number is required';
-    if (!formData.currentRoomType) newErrors.currentRoomType = 'Current room type is required';
+    if (!formData.currentHostelName) {
+      newErrors.currentHostelName = 'Current hostel is required';
+    } else if (!availableHostels.includes(formData.currentHostelName)) {
+      newErrors.currentHostelName = 'Invalid hostel selection';
+    }
     
-    if (!preferredHostel) newErrors.preferredHostel = 'Preferred hostel is required';
-    if (!formData.preferredRoomType) newErrors.preferredRoomType = 'Preferred room type is required';
+    if (!formData.currentRoomNumber?.trim()) {
+      newErrors.currentRoomNumber = 'Current room number is required';
+    }
     
-    if (!formData.reasonForRequest) newErrors.reasonForRequest = 'Please select a reason';
-    if (!formData.studentAgreement) newErrors.studentAgreement = 'You must agree to the declaration';
+    if (!formData.currentRoomType) {
+      newErrors.currentRoomType = 'Current room type is required';
+    }
+    
+    if (!formData.preferredHostel) {
+      newErrors.preferredHostel = 'Preferred hostel is required';
+    } else if (!availableHostels.includes(formData.preferredHostel)) {
+      newErrors.preferredHostel = 'Invalid hostel selection';
+    }
+    
+    if (!formData.preferredRoomType) {
+      newErrors.preferredRoomType = 'Preferred room type is required';
+    }
+    
+    if (!formData.reasonForRequest) {
+      newErrors.reasonForRequest = 'Please select a reason';
+    }
+    
+    if (formData.reasonForRequest === 'Other') {
+      if (!formData.otherReason?.trim()) {
+        newErrors.otherReason = 'Please specify your reason';
+      }
+    }
+    
+    if (!formData.studentAgreement) {
+      newErrors.studentAgreement = 'You must agree to the declaration';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle toxic popup close and clear the field
+  const handleToxicPopupClose = () => {
+    setShowToxicPopup(false);
+    // Clear the toxic content from the field
+    setFormData(prev => ({
+      ...prev,
+      otherReason: ''
+    }));
+    setToxicWordsFound([]);
+    setToxicText('');
+    // Focus on the otherReason field
+    setTimeout(() => {
+      const element = document.querySelector('[name="otherReason"]');
+      if (element) {
+        element.focus();
+        element.classList.add('border-red-500');
+        setTimeout(() => {
+          element.classList.remove('border-red-500');
+        }, 1000);
+      }
+    }, 100);
+  };
+
+  // Handle toxic popup close and keep the field (for editing)
+  const handleToxicPopupEdit = () => {
+    setShowToxicPopup(false);
+    // Focus on the otherReason field for editing
+    setTimeout(() => {
+      const element = document.querySelector('[name="otherReason"]');
+      if (element) {
+        element.focus();
+        element.classList.add('border-red-500', 'bg-red-50');
+        setTimeout(() => {
+          element.classList.remove('border-red-500', 'bg-red-50');
+        }, 1500);
+      }
+    }, 100);
   };
 
   // API call to submit form
@@ -399,11 +548,14 @@ const RoomChangeRequestForm = () => {
       }
       return;
     }
+    
+    if (!validateToxicContent()) {
+      return;
+    }
 
     setLoading(true);
     setApiError(null);
 
-    // Prepare data for API
     const submitData = {
       userType: userType,
       registrationNumber: formData.registrationNumber,
@@ -437,8 +589,6 @@ const RoomChangeRequestForm = () => {
         setRequestId(response.data.requestId);
         setSubmitted(true);
         console.log('Form submitted successfully:', response.data);
-        
-        // Scroll to top to show success message
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
@@ -487,6 +637,7 @@ const RoomChangeRequestForm = () => {
     setRequestId(null);
     setErrors({});
     setApiError(null);
+    setShowToxicPopup(false);
   };
 
   const fillSampleData = () => {
@@ -507,8 +658,8 @@ const RoomChangeRequestForm = () => {
         preferredHostel: 'Block B',
         preferredRoomNumber: '205',
         preferredRoomType: 'Single',
-        reasonForRequest: 'Roommate issues',
-        otherReason: '',
+        reasonForRequest: 'Other',
+        otherReason: 'Distance to classes is too far',
         priorityLevel: 'Normal',
         studentAgreement: true
       });
@@ -526,7 +677,7 @@ const RoomChangeRequestForm = () => {
         currentHostelName: 'Block A',
         currentRoomNumber: '303',
         currentRoomType: 'Shared',
-        preferredHostel: 'Block C',
+        preferredHostel: 'Block B',
         preferredRoomNumber: '410',
         preferredRoomType: 'Single',
         reasonForRequest: 'Health reasons',
@@ -559,8 +710,9 @@ const RoomChangeRequestForm = () => {
     }
   };
 
+  // Updated hostel options - Only Block A, B, C (D and E hidden)
   const getHostelOptions = () => {
-    return ['Block A', 'Block B', 'Block C', 'Block D', 'Block E'];
+    return ['Block A', 'Block B', 'Block C'];
   };
 
   return (
@@ -721,11 +873,16 @@ const RoomChangeRequestForm = () => {
                     value={formData.registrationNumber}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.registrationNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} transition duration-200 ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.registrationNumber ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-${theme.primaryMedium}'} rounded-lg focus:ring-2 focus:border-${theme.primaryMedium} transition duration-200 ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder={`Enter ${userType === 'staff' ? 'staff ID' : 'registration number'}`}
                   />
                   {errors.registrationNumber && (
-                    <p className="mt-1 text-sm text-red-600">{errors.registrationNumber}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.registrationNumber}
+                    </p>
                   )}
                 </div>
 
@@ -739,11 +896,16 @@ const RoomChangeRequestForm = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.fullName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.fullName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="Enter your full name"
                   />
                   {errors.fullName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.fullName}
+                    </p>
                   )}
                 </div>
 
@@ -815,7 +977,12 @@ const RoomChangeRequestForm = () => {
                       </div>
                     </div>
                     {errors.gender && (
-                      <p className="mt-1 text-sm text-red-600">{errors.gender}</p>
+                      <p className="mt-1 text-sm text-red-600 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.gender}
+                      </p>
                     )}
                   </div>
                 )}
@@ -841,12 +1008,18 @@ const RoomChangeRequestForm = () => {
                     value={formData.nicIdNumber}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.nicIdNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
-                    placeholder="Enter NIC/ID number"
+                    className={`w-full px-4 py-3 border ${errors.nicIdNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    placeholder="Enter NIC number (e.g., 987654321V or 123456789012)"
                   />
                   {errors.nicIdNumber && (
-                    <p className="mt-1 text-sm text-red-600">{errors.nicIdNumber}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.nicIdNumber}
+                    </p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Format: 9 digits + V OR 12 digits (e.g., 987654321V or 123456789012)</p>
                 </div>
 
                 <div>
@@ -859,12 +1032,18 @@ const RoomChangeRequestForm = () => {
                     value={formData.contactNumber}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.contactNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
-                    placeholder="Enter contact number"
+                    className={`w-full px-4 py-3 border ${errors.contactNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    placeholder="Enter 10-digit contact number (e.g., 0712345678)"
                   />
                   {errors.contactNumber && (
-                    <p className="mt-1 text-sm text-red-600">{errors.contactNumber}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.contactNumber}
+                    </p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Please enter exactly 10 digits (e.g., 0712345678)</p>
                 </div>
 
                 <div className="md:col-span-2">
@@ -877,12 +1056,18 @@ const RoomChangeRequestForm = () => {
                     value={formData.emailAddress}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.emailAddress ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
-                    placeholder="Enter email address"
+                    className={`w-full px-4 py-3 border ${errors.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} focus:border-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    placeholder="Enter email address (must contain @ symbol)"
                   />
                   {errors.emailAddress && (
-                    <p className="mt-1 text-sm text-red-600">{errors.emailAddress}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.emailAddress}
+                    </p>
                   )}
+                  <p className="mt-1 text-xs text-gray-500">Valid email must contain @ symbol (e.g., name@domain.com)</p>
                 </div>
 
                 {/* Staff Specific Fields */}
@@ -898,11 +1083,16 @@ const RoomChangeRequestForm = () => {
                         value={formData.staffId}
                         onChange={handleInputChange}
                         disabled={submitted}
-                        className={`w-full px-4 py-3 border ${errors.staffId ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                        className={`w-full px-4 py-3 border ${errors.staffId ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                         placeholder="Enter staff ID"
                       />
                       {errors.staffId && (
-                        <p className="mt-1 text-sm text-red-600">{errors.staffId}</p>
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {errors.staffId}
+                        </p>
                       )}
                     </div>
 
@@ -915,7 +1105,7 @@ const RoomChangeRequestForm = () => {
                         value={formData.department}
                         onChange={handleInputChange}
                         disabled={submitted}
-                        className={`w-full px-4 py-3 border ${errors.department ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                        className={`w-full px-4 py-3 border ${errors.department ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                       >
                         <option value="">Select Department</option>
                         <option value="Computer Science">Computer Science</option>
@@ -926,7 +1116,12 @@ const RoomChangeRequestForm = () => {
                         <option value="Administration">Administration</option>
                       </select>
                       {errors.department && (
-                        <p className="mt-1 text-sm text-red-600">{errors.department}</p>
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {errors.department}
+                        </p>
                       )}
                     </div>
 
@@ -939,7 +1134,7 @@ const RoomChangeRequestForm = () => {
                         value={formData.designation}
                         onChange={handleInputChange}
                         disabled={submitted}
-                        className={`w-full px-4 py-3 border ${errors.designation ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                        className={`w-full px-4 py-3 border ${errors.designation ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                       >
                         <option value="">Select Designation</option>
                         <option value="Professor">Professor</option>
@@ -950,7 +1145,12 @@ const RoomChangeRequestForm = () => {
                         <option value="Technical Officer">Technical Officer</option>
                       </select>
                       {errors.designation && (
-                        <p className="mt-1 text-sm text-red-600">{errors.designation}</p>
+                        <p className="mt-1 text-sm text-red-600 flex items-center">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {errors.designation}
+                        </p>
                       )}
                     </div>
                   </>
@@ -982,7 +1182,7 @@ const RoomChangeRequestForm = () => {
                     value={formData.currentHostelName}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.currentHostelName ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.currentHostelName ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Current Hostel</option>
                     {getHostelOptions().map(hostel => (
@@ -990,7 +1190,12 @@ const RoomChangeRequestForm = () => {
                     ))}
                   </select>
                   {errors.currentHostelName && (
-                    <p className="mt-1 text-sm text-red-600">{errors.currentHostelName}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.currentHostelName}
+                    </p>
                   )}
                 </div>
 
@@ -1004,11 +1209,16 @@ const RoomChangeRequestForm = () => {
                     value={formData.currentRoomNumber}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.currentRoomNumber ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.currentRoomNumber ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                     placeholder="E.g., 101, 202A"
                   />
                   {errors.currentRoomNumber && (
-                    <p className="mt-1 text-sm text-red-600">{errors.currentRoomNumber}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.currentRoomNumber}
+                    </p>
                   )}
                 </div>
 
@@ -1021,7 +1231,7 @@ const RoomChangeRequestForm = () => {
                     value={formData.currentRoomType}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.currentRoomType ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.currentRoomType ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Room Type</option>
                     <option value="Single">Single</option>
@@ -1036,7 +1246,12 @@ const RoomChangeRequestForm = () => {
                     )}
                   </select>
                   {errors.currentRoomType && (
-                    <p className="mt-1 text-sm text-red-600">{errors.currentRoomType}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.currentRoomType}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1066,7 +1281,7 @@ const RoomChangeRequestForm = () => {
                     value={formData.preferredHostel}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.preferredHostel ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.preferredHostel ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Preferred Hostel</option>
                     {getHostelOptions().map(hostel => (
@@ -1074,7 +1289,12 @@ const RoomChangeRequestForm = () => {
                     ))}
                   </select>
                   {errors.preferredHostel && (
-                    <p className="mt-1 text-sm text-red-600">{errors.preferredHostel}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.preferredHostel}
+                    </p>
                   )}
                 </div>
 
@@ -1102,7 +1322,7 @@ const RoomChangeRequestForm = () => {
                     value={formData.preferredRoomType}
                     onChange={handleInputChange}
                     disabled={submitted}
-                    className={`w-full px-4 py-3 border ${errors.preferredRoomType ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
+                    className={`w-full px-4 py-3 border ${errors.preferredRoomType ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''}`}
                   >
                     <option value="">Select Room Type</option>
                     <option value="Single">Single</option>
@@ -1116,7 +1336,12 @@ const RoomChangeRequestForm = () => {
                     )}
                   </select>
                   {errors.preferredRoomType && (
-                    <p className="mt-1 text-sm text-red-600">{errors.preferredRoomType}</p>
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.preferredRoomType}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1171,14 +1396,19 @@ const RoomChangeRequestForm = () => {
                   ))}
                 </div>
                 {errors.reasonForRequest && (
-                  <p className="mt-2 text-sm text-red-600">{errors.reasonForRequest}</p>
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.reasonForRequest}
+                  </p>
                 )}
               </div>
               
               {formData.reasonForRequest === 'Other' && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Please specify other reason
+                    Please specify other reason <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="otherReason"
@@ -1186,9 +1416,23 @@ const RoomChangeRequestForm = () => {
                     onChange={handleInputChange}
                     disabled={submitted}
                     rows="3"
-                    className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 ${submitted ? 'bg-gray-100' : ''}`}
-                    placeholder="Please provide details about your reason for room change"
+                    className={`w-full px-4 py-3 border ${errors.otherReason ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-${theme.primaryMedium} ${submitted ? 'bg-gray-100' : ''} transition-all duration-200`}
+                    placeholder="Please provide details about your reason for room change (inappropriate language will be rejected)"
                   />
+                  {errors.otherReason && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.otherReason}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500 flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    Please use respectful language. Inappropriate content will be rejected.
+                  </p>
                 </div>
               )}
               
@@ -1258,7 +1502,7 @@ const RoomChangeRequestForm = () => {
                   <div className="ml-4">
                     <h3 className={`text-lg font-bold text-${theme.primaryDark}`}>Important Declaration</h3>
                     <div className={`mt-2 text-${theme.primaryDark}`}>
-                      <p>I confirm that the above information is true and correct to the best of my knowledge. I understand that providing false information may result in disciplinary action.</p>
+                      <p>I confirm that the above information is true and correct to the best of my knowledge. I understand that providing false information or using inappropriate language may result in disciplinary action and immediate rejection of the request.</p>
                     </div>
                     <div className="mt-4">
                       <div className="flex items-start">
@@ -1273,11 +1517,16 @@ const RoomChangeRequestForm = () => {
                         />
                         <label htmlFor="student-agreement" className="ml-3 block">
                           <span className="text-lg font-medium text-gray-800">I agree to the above declaration</span>
-                          <span className="text-sm text-gray-600 block mt-1">By checking this, you confirm all information provided is accurate</span>
+                          <span className="text-sm text-gray-600 block mt-1">By checking this, you confirm all information provided is accurate and respectful</span>
                         </label>
                       </div>
                       {errors.studentAgreement && (
-                        <p className="mt-2 text-sm text-red-600">{errors.studentAgreement}</p>
+                        <p className="mt-2 text-sm text-red-600 flex items-center">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {errors.studentAgreement}
+                        </p>
                       )}
                     </div>
                   </div>
@@ -1347,8 +1596,99 @@ const RoomChangeRequestForm = () => {
             </svg>
             University Hostel Management System • {theme.hostelType} • Room Change Request Form
           </p>
+          <p className="text-xs mt-2 text-gray-400">
+            Note: All requests are reviewed by the admin. Please use respectful language in all fields.
+          </p>
         </div>
       </div>
+
+      {/* Toxic Content Popup Modal */}
+      {showToxicPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-slideUp">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <h3 className="text-xl font-bold text-white ml-2">⚠️ Inappropriate Content Detected</h3>
+                </div>
+                <button
+                  onClick={() => setShowToxicPopup(false)}
+                  className="text-white hover:text-gray-200 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-gray-700 mb-3">
+                  Your request contains inappropriate or offensive language. Please remove the following words from your reason:
+                </p>
+                
+                {toxicWordsFound.length > 0 && (
+                  <div className="bg-red-50 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-semibold text-red-800 mb-2">Detected words:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {toxicWordsFound.map((word, index) => (
+                        <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                          {word}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Your text:</p>
+                  <p className="text-sm text-gray-600 italic">"{toxicText}"</p>
+                </div>
+                
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                        Using inappropriate language in official requests may result in disciplinary action. Please maintain professionalism when communicating with the university administration.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={handleToxicPopupClose}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  Clear & Reset
+                </button>
+                <button
+                  onClick={handleToxicPopupEdit}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-200 flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                  Edit Reason
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {showPreview && (
@@ -1478,6 +1818,33 @@ const RoomChangeRequestForm = () => {
           </div>
         </div>
       )}
+
+      {/* Add CSS animation styles */}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+        
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
