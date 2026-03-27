@@ -51,6 +51,12 @@ app.use("/api/notifications", notificationRoute);
 app.use("/api/gallery", galleryRoute);
 app.use("/api/admin", adminStudentRoute);
 
+// ── Ometh's Routes ──
+const roomdetailsRouter = require("./RoomDetailsForm/routes/roomdetails");
+const roomchangeRouter = require("./Roomchangerequest/routes/roomchange");
+app.use("/roomdetails", roomdetailsRouter);
+app.use("/roomchange", roomchangeRouter);
+
 // ── Health check ──
 app.get("/", (req, res) => {
   res.json({ message: "3Y2S Hostel Management Server is running ✅" });

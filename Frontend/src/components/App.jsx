@@ -8,7 +8,16 @@ import StudentDashboard from "../pages/StudentDashboard.jsx";
 import AdminDashboard from "../pages/AdminDashboard.jsx";
 import AdminLogin from "../pages/AdminLogin";
 
-
+// Ometh's Components
+import OmethHome from "../pages/OmethHome";
+import OmethExternalView from "../pages/OmethExternalView";
+import RoomChangeRequest from "./ometh/RoomChangeRequest/RoomChangeRequest";
+import RoomDetailsForm from "./ometh/Add Room/RoomDetailsForm";
+import RoomTransferRequest from "./ometh/RoomTransferRequest ADMIN/RoomTransferRequest";
+import RoomManagementDashboard from "./ometh/RoomManagementDashboard/RoomManagementDashboard";
+import RoomManageMentNavebar from "./ometh/RoomManageMentNavebar/RoomManageMentNavebar";
+import RoomManagementSidebar from "./ometh/RoomManageMentNavebar/RoomManagementSidebar";
+import OmethLayout from "../layouts/OmethLayout";
 function PrivateRoute({ children }) {
 
   const token = localStorage.getItem("studentToken");
@@ -46,7 +55,16 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
 
         <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
+
+        {/* Ometh's Routes */}
+        <Route path="/ometh-home" element={<OmethHome />} />
+        <Route path="/external" element={<OmethExternalView />} />
+        <Route path="/room-change-request" element={<RoomChangeRequest />} />
+        <Route path="/RoomDetailsForm" element={<OmethLayout><RoomDetailsForm /></OmethLayout>} />
+        <Route path="/RoomTransferRequest" element={<OmethLayout><RoomTransferRequest /></OmethLayout>} />
+        <Route path="/RoomManagementDashboard" element={<OmethLayout><RoomManagementDashboard /></OmethLayout>} />
+        <Route path="/RoomManageMentNavebar" element={<RoomManageMentNavebar />} />
+        <Route path="/RoomManagementSidebar" element={<RoomManagementSidebar />} />
 
       </Routes>
 

@@ -27,6 +27,7 @@ export default function Home() {
           <a href="#features" className="navLink">Features</a>
           <a href="#blocks"   className="navLink">Blocks</a>
           <a href="#contact"  className="navLink">Contact</a>
+          <a href="/ometh-home" className="navLink">Room Info</a>
         </div>
 
 

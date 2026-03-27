@@ -554,6 +554,7 @@ const StudentDashboard = () => {
     { section:'profile',      label:'Student Profile', group:'STUDENT', d:'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
     { section:'rooms',        label:'Room Selection',  group:'STUDENT', d:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { section:'leave',        label:'Leave Request',   group:'STUDENT', d:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+    { section:'room-change',  label:'Room Change',     group:'STUDENT', d:'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', action: () => navigate('/room-change-request') },
     { section:'notification', label:'Notification',    group:'STUDENT', d:'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
     { section:'gallery',      label:'Gallery',         group:'STUDENT', sublabel:'Rooms', d:'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
     { section:'about',        label:'About',           group:'STUDENT', d:'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -1128,9 +1129,9 @@ const StudentDashboard = () => {
               {['MAIN','STUDENT'].map(group => (
                 <div style={styles.sidebarSection} key={group}>
                   <span className="sidebar-section-title" style={styles.sidebarSectionTitle}>{group}</span>
-                  {navItems.filter(i => i.group===group).map(({ section, label, sublabel, d }) => (
+                  {navItems.filter(i => i.group===group).map(({ section, label, sublabel, d, action }) => (
                     <button key={section}
-                      onClick={() => { setActiveSection(section); setEditMode(false); setSaveSuccess(false); setSaveError(''); }}
+                      onClick={() => { if(action) { action(); } else { setActiveSection(section); setEditMode(false); setSaveSuccess(false); setSaveError(''); } }}
                       style={{ ...styles.sidebarLink, ...(activeSection===section ? styles.sidebarLinkActive : {}) }}
                       className="sidebar-link">
                       <span style={styles.sidebarLinkIcon} className="sidebar-link-icon">
