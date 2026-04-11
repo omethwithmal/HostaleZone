@@ -771,7 +771,7 @@ const StudentDashboard = () => {
                       <div style={{ position:'relative', zIndex:1, width:'100%' }}>
                         <p style={styles.roomNumber(isSelected,available)}>Room {num}</p>
                         <span style={styles.roomCapacity(isSelected)}>Capacity: 2 beds</span>
-                        <button style={{ marginTop: '1.25rem', width: '100%', padding: '0.75rem', borderRadius: '12px', border: 'none', background: isSelected ? 'rgba(255,255,255,0.15)' : available ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent', color: isSelected ? 'white' : available ? '#2563eb' : 'transparent', fontWeight: 800, fontSize: '0.85rem', cursor: available ? 'pointer' : 'default', transition: 'all 0.25s ease', display: isSelected || available ? 'block' : 'none', border: isSelected ? '1px solid rgba(255,255,255,0.3)' : available ? '1px solid #bfdbfe' : 'none', letterSpacing: '0.02em' }}>{isSelected ? '✓ Room Selected' : 'Choose Room'}</button>
+                        <button style={{ marginTop: '1.25rem', width: '100%', padding: '0.75rem', borderRadius: '12px', background: isSelected ? 'rgba(255,255,255,0.15)' : available ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent', color: isSelected ? 'white' : available ? '#2563eb' : 'transparent', fontWeight: 800, fontSize: '0.85rem', cursor: available ? 'pointer' : 'default', transition: 'all 0.25s ease', display: isSelected || available ? 'block' : 'none', border: isSelected ? '1px solid rgba(255,255,255,0.3)' : available ? '1px solid #bfdbfe' : 'none', letterSpacing: '0.02em' }}>{isSelected ? '✓ Room Selected' : 'Choose Room'}</button>
                       </div>
                     </div>
                   ); })}</div></>)}
@@ -785,7 +785,7 @@ const StudentDashboard = () => {
                       <div style={{ position:'relative', zIndex:1, width:'100%' }}>
                         <p style={styles.roomNumber(isSelected,available)}>Room {room.roomNumber}</p>
                         <span style={styles.roomCapacity(isSelected)}>Capacity: {room.capacity||2} beds</span>
-                        <button style={{ marginTop: '1.25rem', width: '100%', padding: '0.75rem', borderRadius: '12px', border: 'none', background: isSelected ? 'rgba(255,255,255,0.15)' : available ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent', color: isSelected ? 'white' : available ? '#2563eb' : 'transparent', fontWeight: 800, fontSize: '0.85rem', cursor: available ? 'pointer' : 'default', transition: 'all 0.25s ease', display: isSelected || available ? 'block' : 'none', border: isSelected ? '1px solid rgba(255,255,255,0.3)' : available ? '1px solid #bfdbfe' : 'none', letterSpacing: '0.02em' }}>{isSelected ? '✓ Room Selected' : 'Choose Room'}</button>
+                        <button style={{ marginTop: '1.25rem', width: '100%', padding: '0.75rem', borderRadius: '12px', background: isSelected ? 'rgba(255,255,255,0.15)' : available ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent', color: isSelected ? 'white' : available ? '#2563eb' : 'transparent', fontWeight: 800, fontSize: '0.85rem', cursor: available ? 'pointer' : 'default', transition: 'all 0.25s ease', display: isSelected || available ? 'block' : 'none', border: isSelected ? '1px solid rgba(255,255,255,0.3)' : available ? '1px solid #bfdbfe' : 'none', letterSpacing: '0.02em' }}>{isSelected ? '✓ Room Selected' : 'Choose Room'}</button>
                       </div>
                     </div>
                   ); })}</div>)}
