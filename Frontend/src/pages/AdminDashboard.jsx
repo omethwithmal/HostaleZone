@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import AttendanceScanner from './AttendanceScanner';
 
 const API_BASE = "http://localhost:5000";
 
@@ -482,6 +483,7 @@ export default function AdminDashboard() {
     dashboard:{ title:"Dashboard Overview", sub:"Overview"            },
     students: { title:"Student Management", sub:"Students · Records"  },
     leaves:   { title:"Leave Management",   sub:"Leaves · Requests"   },
+    attendance: { title:"Smart Attendance", sub:"Scanner · Records"   },
   }[activeMenu] || { title:"Admin Panel", sub:"" }), [activeMenu]);
 
   const NAV_GROUPS = [
@@ -490,8 +492,11 @@ export default function AdminDashboard() {
     ]},
     { section:"Management", items:[
       { key:"students", label:"Students",    icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+      { key:"attendance",label:"Attendance", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg> },
       { key:"leaves",   label:"Leave Mgmt", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
       { key:"rooms",    label:"Room Mgmt",  icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, action:()=>navigate("/RoomManagementDashboard") },
+      { key:"payments", label:"Payments",   icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>, action:()=>navigate("/payment/admin/dashboard") },
+      { key:"complaints", label:"Complaints", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>, action:()=>navigate("/complaint/admin") },
     ]},
     { section:"System", items:[
       { key:"__web", label:"Go to Website", icon:<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>, action:()=>navigate("/") },
@@ -876,6 +881,7 @@ export default function AdminDashboard() {
             {activeMenu==="dashboard" && <DashboardContent />}
             {activeMenu==="students"  && <StudentsContent />}
             {activeMenu==="leaves"    && <LeaveManagement token={adminToken} />}
+            {activeMenu==="attendance"&& <AttendanceScanner token={adminToken} />}
           </div>
         </div>
       </div>
