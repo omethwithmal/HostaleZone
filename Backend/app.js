@@ -42,6 +42,15 @@ const roomRoute = require("./Route/RoomRoute");
 const leaveRoute = require("./Route/LeaveRoute");
 const notificationRoute = require("./Route/NotificationRoute");
 const galleryRoute = require("./Route/GalleryRoute");
+const attendanceRoute = require("./Route/attendanceRoutes");
+
+// ── Import Payment Routes (Bagaya Payment) ──
+const authPaymentRoutes = require("./Route/authRoutes");
+const feeRoutes = require("./Route/feeRoutes");
+const paymentRoutes = require("./Route/paymentRoutes");
+const reportRoutes = require("./Route/reportRoutes");
+const userPaymentRoutes = require("./Route/userRoutes");
+const notificationPaymentRoutes = require("./Route/notificationRoutes");
 
 // ── Use Routes ──
 app.use("/api/student", studentRoute);
@@ -49,8 +58,20 @@ app.use("/api/rooms", roomRoute);
 app.use("/api/leave", leaveRoute);
 app.use("/api/notifications", notificationRoute);
 app.use("/api/gallery", galleryRoute);
+app.use("/api/attendance", attendanceRoute);
 app.use("/api/admin", adminStudentRoute);
 
+// ── Use Payment Routes ──
+app.use("/api/auth", authPaymentRoutes);
+app.use("/api/fees", feeRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/reports", reportRoutes);
+app.use("/api/users", userPaymentRoutes);
+app.use("/api/payment-notifications", notificationPaymentRoutes);
+
+// ── Use Complaint Routes (Hasinika) ──
+const complaintRoutes = require("./Route/complaint");
+app.use("/api/complaints", complaintRoutes);
 // ── Ometh's Routes ──
 const roomdetailsRouter = require("./RoomDetailsForm/routes/roomdetails");
 const roomchangeRouter = require("./Roomchangerequest/routes/roomchange");

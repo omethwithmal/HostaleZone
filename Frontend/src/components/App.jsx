@@ -18,6 +18,13 @@ import RoomManagementDashboard from "./ometh/RoomManagementDashboard/RoomManagem
 import RoomManageMentNavebar from "./ometh/RoomManageMentNavebar/RoomManageMentNavebar";
 import RoomManagementSidebar from "./ometh/RoomManageMentNavebar/RoomManagementSidebar";
 import OmethLayout from "../layouts/OmethLayout";
+
+// Bagaya Payment components
+import { App as PaymentApp } from "../PaymentApp";
+
+// Hasinika Complaint components
+import { ComplaintApp } from "../ComplaintApp";
+
 function PrivateRoute({ children }) {
 
   const token = localStorage.getItem("studentToken");
@@ -65,6 +72,12 @@ export default function App() {
         <Route path="/RoomManagementDashboard" element={<OmethLayout><RoomManagementDashboard /></OmethLayout>} />
         <Route path="/RoomManageMentNavebar" element={<RoomManageMentNavebar />} />
         <Route path="/RoomManagementSidebar" element={<RoomManagementSidebar />} />
+
+        {/* Bagaya Payment Routes */}
+        <Route path="/payment/*" element={<PaymentApp />} />
+
+        {/* Hasinika Complaint Routes */}
+        <Route path="/complaint/*" element={<ComplaintApp />} />
 
       </Routes>
 

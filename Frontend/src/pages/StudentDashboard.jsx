@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { QRCodeCanvas } from 'qrcode.react';
 import Gallery from "./Gallery";
 import About from "./About";
 
@@ -98,6 +99,7 @@ const StudentDashboard = () => {
 
   // ── Fetch leave history whenever Leave tab opens ──
   useEffect(() => {
+
     if (activeSection !== 'leave') return;
     fetchMyLeaves();
   }, [activeSection]);
@@ -205,6 +207,34 @@ const StudentDashboard = () => {
       }
     } catch {
       setBookingStatus('error'); setBookingMsg('Network error. Please try again.');
+    } finally { setBookingLoading(false); }
+  };
+
+  const handleCancelBooking = async () => {
+    if (!window.confirm("Are you sure you want to cancel your current room booking?")) return;
+    setBookingLoading(true); setBookingStatus(''); setBookingMsg('');
+    try {
+      const token = localStorage.getItem('studentToken');
+      const res = await fetch(`${API_BASE}/api/rooms/cancel`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMyBooking(null);
+        if (selectedBlock) {
+          fetch(`${API_BASE}/api/rooms?block=${selectedBlock}`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(r => r.json())
+            .then(d => setRooms(d.rooms || d || []));
+        }
+        setBookingStatus('success');
+        setBookingMsg('Your booking was cancelled successfully. You may now book a new room.');
+      } else {
+        setBookingStatus('error');
+        setBookingMsg(data.message || 'Failed to cancel booking.');
+      }
+    } catch {
+      setBookingStatus('error'); setBookingMsg('Network error while cancelling booking.');
     } finally { setBookingLoading(false); }
   };
 
@@ -389,11 +419,11 @@ const StudentDashboard = () => {
     selectedTick: (color) => ({ position: 'absolute', top: '0.75rem', left: '0.75rem', width: '22px', height: '22px', borderRadius: '50%', background: `linear-gradient(135deg, ${color.main}, ${color.dark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }),
     roomsPanel: { background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(37,99,235,0.12)', border: '1px solid rgba(255,255,255,0.8)' },
     roomsPanelBody: { padding: '2rem 2.5rem' },
-    roomsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '1rem', marginBottom: '1.5rem' },
-    roomCard: (isSelected, isAvailable) => ({ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem', padding: '1.25rem 0.75rem', borderRadius: '14px', cursor: isAvailable ? 'pointer' : 'not-allowed', border: '2px solid', transition: 'all 0.25s ease', position: 'relative', background: !isAvailable ? '#f8fafc' : isSelected ? 'linear-gradient(135deg, #dbeafe, #bfdbfe)' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)', borderColor: !isAvailable ? '#e2e8f0' : isSelected ? '#3b82f6' : '#86efac', boxShadow: isSelected ? '0 6px 20px rgba(59,130,246,0.25)' : '0 2px 8px rgba(0,0,0,0.04)', transform: isSelected ? 'translateY(-3px)' : 'none', opacity: isAvailable ? 1 : 0.55 }),
-    roomNumber: (isSelected, isAvailable) => ({ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: !isAvailable ? '#94a3b8' : isSelected ? '#1e40af' : '#166534' }),
-    roomBadge: (isAvailable) => ({ fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '20px', textTransform: 'uppercase', background: isAvailable ? 'linear-gradient(135deg, #dcfce7, #bbf7d0)' : '#f1f5f9', color: isAvailable ? '#166534' : '#94a3b8', border: `1px solid ${isAvailable ? '#86efac' : '#e2e8f0'}` }),
-    roomCapacity: { fontSize: '0.72rem', color: '#94a3b8', fontWeight: 500 },
+    roomsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' },
+    roomCard: (isSelected, isAvailable) => ({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', padding: '1.4rem', borderRadius: '22px', cursor: isAvailable ? 'pointer' : 'not-allowed', border: '1.5px solid', transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)', position: 'relative', overflow: 'hidden', background: !isAvailable ? 'linear-gradient(135deg, #f8fafc, #f1f5f9)' : isSelected ? 'linear-gradient(135deg, #2563eb, #1d4ed8)' : 'white', borderColor: !isAvailable ? '#e2e8f0' : isSelected ? '#1e40af' : 'rgba(37,99,235,0.1)', boxShadow: isSelected ? '0 12px 30px rgba(37,99,235,0.4)' : '0 4px 18px rgba(0,0,0,0.04)', transform: isSelected ? 'translateY(-5px) scale(1.02)' : 'none', opacity: isAvailable ? 1 : 0.65 }),
+    roomNumber: (isSelected, isAvailable) => ({ fontSize: '1.5rem', fontWeight: 900, margin: '0 0 0.15rem', color: !isAvailable ? '#94a3b8' : isSelected ? 'white' : '#0f172a', letterSpacing: '-0.03em' }),
+    roomBadge: (isAvailable, isSelected) => ({ fontSize: '0.65rem', fontWeight: 800, padding: '0.3rem 0.8rem', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.06em', background: isSelected ? 'rgba(255,255,255,0.25)' : isAvailable ? 'linear-gradient(135deg, #ecfdf5, #d1fae5)' : '#f1f5f9', color: isSelected ? 'white' : isAvailable ? '#059669' : '#94a3b8', border: isSelected ? '1px solid rgba(255,255,255,0.4)' : isAvailable ? '1px solid #10b981' : '1px solid transparent' }),
+    roomCapacity: (isSelected) => ({ fontSize: '0.8rem', color: isSelected ? 'rgba(255,255,255,0.8)' : '#64748b', fontWeight: 600 }),
     bookingActionsRow: { display: 'flex', gap: '1rem', alignItems: 'center', paddingTop: '1.25rem', borderTop: '1px solid rgba(37,99,235,0.08)' },
     bookRoomBtn: (disabled) => ({ padding: '0.85rem 2.5rem', background: disabled ? 'linear-gradient(135deg, #93c5fd, #bfdbfe)' : 'linear-gradient(135deg, #1e40af, #3b82f6)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '0.9rem', cursor: disabled ? 'not-allowed' : 'pointer', transition: 'all 0.25s ease', boxShadow: disabled ? 'none' : '0 6px 16px rgba(37,99,235,0.35)', display: 'flex', alignItems: 'center', gap: '0.5rem' }),
     selectedRoomInfo: { fontSize: '0.88rem', color: '#64748b', fontWeight: 500 },
@@ -551,10 +581,15 @@ const StudentDashboard = () => {
 
   const navItems = [
     { section:'dashboard',    label:'Dashboard',       group:'MAIN',    d:'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
+    { section:'digital-pass', label:'My Digital Pass', group:'MAIN',    d:'M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm4 5a2 2 0 110-4 2 2 0 010 4zm4-2h4m-4 4h4m-8 4h8' },
     { section:'profile',      label:'Student Profile', group:'STUDENT', d:'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
     { section:'rooms',        label:'Room Selection',  group:'STUDENT', d:'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { section:'leave',        label:'Leave Request',   group:'STUDENT', d:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
     { section:'room-change',  label:'Room Change',     group:'STUDENT', d:'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', action: () => navigate('/room-change-request') },
+    { section:'payments',     label:'Payments & Fees', group:'STUDENT', d:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', action: () => navigate('/payment/student/dashboard') },
+    { section:'submit-payment', label:'Submit Payment', group:'STUDENT', d:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z', action: () => navigate('/payment/student/submit-payment') },
+    { section:'payment-history', label:'Payment History', group:'STUDENT', d:'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', action: () => navigate('/payment/student/history') },
+    { section:'complaints',   label:'Complaints',      group:'STUDENT', d:'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z', action: () => navigate('/complaint/dashboard') },
     { section:'notification', label:'Notification',    group:'STUDENT', d:'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' },
     { section:'gallery',      label:'Gallery',         group:'STUDENT', sublabel:'Rooms', d:'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' },
     { section:'about',        label:'About',           group:'STUDENT', d:'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -576,6 +611,50 @@ const StudentDashboard = () => {
   // ─────────────────────────────────────────
   const renderContent = () => {
     switch (activeSection) {
+
+      // ── DIGITAL PASS ──
+      case 'digital-pass':
+        const qrPayload = JSON.stringify({ studentRef: studentData._id, studentId: studentData.studentId, studentName: displayName });
+        return (
+          <div style={{ padding: '2rem', display:'flex', flexDirection:'column', alignItems:'center' }}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '2.4rem', fontWeight: 900, color: '#0f172a', margin:0 }}>Digital Pass</h2>
+              <p style={{ color: '#64748b', fontSize: '1.1rem', marginTop: '0.5rem' }}>Present this QR code for daily hostel attendance</p>
+            </div>
+            
+            <div style={{
+              width: '100%', maxWidth: '380px', background: 'linear-gradient(135deg, #1e40af, #3b82f6)',
+              borderRadius: '24px', padding: '30px', boxShadow: '0 20px 40px rgba(37,99,235,0.3)',
+              position: 'relative', overflow: 'hidden', textAlign: 'center', color: 'white'
+            }}>
+              <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(20px)' }}></div>
+              <div style={{ position: 'absolute', bottom: '-50px', left: '-50px', width: '150px', height: '150px', background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(20px)' }}></div>
+              
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <img src={profilePhotoUrl || placeholderAvatar} alt="Profile" style={{ width: '100px', height: '100px', borderRadius: '50%', border: '4px solid rgba(255,255,255,0.3)', marginBottom: '15px', objectFit:'cover' }} />
+                <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: '0 0 5px 0' }}>{displayName}</h3>
+                <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.8)', fontWeight: 600, margin: '0 0 25px 0', letterSpacing: '0.05em' }}>{studentData.studentId || 'N/A'}</p>
+                
+                <div style={{ background: 'white', padding: '20px', borderRadius: '16px', display: 'inline-block', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', position: 'relative' }}>
+                  <QRCodeCanvas value={qrPayload} size={200} level="H" includeMargin={true} />
+                  <div style={{ width: '100%', height: '4px', background: 'rgba(59,130,246,0.6)', position: 'absolute', left: 0, top: '50%', boxShadow: '0 0 15px 5px rgba(59,130,246,0.5)', animation: 'scanLine 3s infinite linear' }}></div>
+                </div>
+                
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', marginTop: '20px', fontWeight: 500 }}>
+                  Live updating • Secure QR Format
+                </p>
+                <style>{`
+                  @keyframes scanLine {
+                    0% { top: 10%; opacity: 0; }
+                    10% { opacity: 1; }
+                    90% { top: 90%; opacity: 1; }
+                    100% { top: 90%; opacity: 0; }
+                  }
+                `}</style>
+              </div>
+            </div>
+          </div>
+        );
 
       // ── DASHBOARD ──
       case 'dashboard':
@@ -645,11 +724,11 @@ const StudentDashboard = () => {
           </div>
         );
 
-      // ── ROOM SELECTION ──
       case 'rooms':
         return (
           <div style={styles.roomPage}>
-            {myBooking && (<div style={styles.myBookingBanner}><div style={styles.myBookingIcon}><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div><div style={styles.myBookingText}><p style={styles.myBookingTitle}>Your Current Room Booking</p><p style={styles.myBookingValue}>Block {myBooking.block||'—'} · Room {myBooking.roomNumber||myBooking.room||'—'}{myBooking.type?` · ${myBooking.type}`:''}</p></div></div>)}
+            {myBooking && (<div style={styles.myBookingBanner}><div style={styles.myBookingIcon}><svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div><div style={{...styles.myBookingText, flex: 1}}><p style={styles.myBookingTitle}>Your Current Room Booking</p><p style={styles.myBookingValue}>Block {myBooking.block||'—'} · Room {myBooking.roomNumber||myBooking.room||'—'}{myBooking.type?` · ${myBooking.type}`:''}</p></div><button onClick={() => navigate('/payment/student/gateway')} style={{ padding: '10px 18px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 10px rgba(37, 99, 235, 0.2)', transition: 'background 0.2s', marginRight: '10px' }}>Pay Fees 💳</button><button onClick={handleCancelBooking} disabled={bookingLoading} style={{ padding: '10px 18px', background: '#DC2626', color: 'white', border: 'none', borderRadius: '10px', cursor: bookingLoading ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 10px rgba(220, 38, 38, 0.2)', transition: 'background 0.2s', opacity: bookingLoading ? 0.7 : 1 }}>Cancel Booking</button></div>)}
+
             <div style={styles.blockSelectorPanel}>
               <div style={styles.panelHeader}><div style={styles.panelHeaderAccent}></div><h2 style={styles.panelHeaderH2}>Select a Block</h2></div>
               <div style={styles.blockSelectorBody}>
@@ -671,12 +750,53 @@ const StudentDashboard = () => {
               <div style={styles.roomsPanel}>
                 <div style={styles.panelHeader}><div style={styles.panelHeaderAccent}></div><h2 style={styles.panelHeaderH2}>Block {selectedBlock} — {blocks.find(b=>b.id===selectedBlock)?.sub} Rooms</h2></div>
                 <div style={styles.roomsPanelBody}>
-                  {bookingStatus && (<div style={{ ...styles.bookingBanner(bookingStatus), marginBottom:'1.25rem' }}><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>{bookingStatus==='success'?<path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />:<path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />}</svg>{bookingMsg}</div>)}
+                  {bookingStatus && (<div style={{ ...styles.bookingBanner(bookingStatus), marginBottom:'1.25rem', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'0.75rem' }}>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>{bookingStatus==='success'?<path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />:<path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />}</svg>
+                      <span>{bookingMsg}</span>
+                    </div>
+                    {bookingStatus === 'success' && (
+                      <button onClick={() => navigate('/payment/student/gateway')} style={{ padding:'7px 16px', background:'white', color:'#15803d', border:'none', borderRadius:'6px', fontWeight:700, fontSize:'0.85rem', cursor:'pointer', boxShadow:'0 2px 5px rgba(0,0,0,0.1)' }}>Proceed to Payment →</button>
+                    )}
+                  </div>)}
                   {roomsLoading && (<div style={styles.roomsLoading}><span className="spin" style={{ display:'inline-block', marginRight:'0.5rem' }}><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#3b82f6" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></span>Loading rooms…</div>)}
                   {roomsError && (<div style={{ ...styles.bookingBanner('error'), marginBottom:'1rem' }}><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>{roomsError}</div>)}
-                  {!roomsLoading && !roomsError && rooms.length===0 && (<><p style={{ margin:'0 0 1.25rem', fontSize:'0.82rem', color:'#94a3b8', fontWeight:500 }}>⚠️ No rooms loaded from server — showing demo rooms. Connect your backend to see live data.</p><div style={styles.roomsGrid}>{Array.from({ length:12 },(_,i) => { const num=`${selectedBlock}${String(i+101).slice(1)}`; const available=i%3!==2; const isSelected=selectedRoom?.roomNumber===num; return (<div key={num} className={available?'room-card-available':''} style={styles.roomCard(isSelected,available)} onClick={() => available&&setSelectedRoom(isSelected?null:{ roomNumber:num, isAvailable:true, capacity:2 })}><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={!available?'#94a3b8':isSelected?'#1e40af':'#16a34a'} strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg><p style={styles.roomNumber(isSelected,available)}>Room {num}</p><span style={styles.roomBadge(available)}>{available?'Available':'Full'}</span><span style={styles.roomCapacity}>Capacity: 2</span></div>); })}</div></>)}
-                  {!roomsLoading && !roomsError && rooms.length>0 && (<div style={styles.roomsGrid}>{rooms.map(room => { const available=room.isAvailable!==false; const isSelected=selectedRoom?._id===room._id; return (<div key={room._id} className={available?'room-card-available':''} style={styles.roomCard(isSelected,available)} onClick={() => available&&setSelectedRoom(isSelected?null:room)}><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke={!available?'#94a3b8':isSelected?'#1e40af':'#16a34a'} strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg><p style={styles.roomNumber(isSelected,available)}>Room {room.roomNumber}</p><span style={styles.roomBadge(available)}>{available?'Available':'Full'}</span><span style={styles.roomCapacity}>Capacity: {room.capacity||2}</span></div>); })}</div>)}
-                  {!roomsLoading && (<div style={styles.bookingActionsRow}><button className={selectedRoom?'book-btn':''} style={styles.bookRoomBtn(!selectedRoom||bookingLoading)} onClick={handleBookRoom} disabled={!selectedRoom||bookingLoading}>{bookingLoading?<><span className="spin"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></span>Booking…</>:<><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Book Selected Room</>}</button>{selectedRoom && <span style={styles.selectedRoomInfo}>Selected: <strong>Room {selectedRoom.roomNumber}</strong> · Block {selectedBlock}</span>}</div>)}
+                  {!roomsLoading && !roomsError && rooms.length===0 && (<><p style={{ margin:'0 0 1.25rem', fontSize:'0.82rem', color:'#94a3b8', fontWeight:500 }}>⚠️ No rooms loaded from server — showing demo rooms. Connect your backend to see live data.</p><div style={styles.roomsGrid}>{Array.from({ length:12 },(_,i) => { const num=`${selectedBlock}${String(i+101).slice(1)}`; const available=i%3!==2; const isSelected=selectedRoom?.roomNumber===num; return (
+                    <div key={num} className={available?'room-card-available':''} style={styles.roomCard(isSelected,available)} onClick={() => available&&setSelectedRoom(isSelected?null:{ roomNumber:num, isAvailable:true, capacity:2 })}>
+                      {isSelected && <div style={{ position:'absolute', top:'-20px', right:'-20px', width:'80px', height:'80px', background:'rgba(255,255,255,0.1)', borderRadius:'50%' }}></div>}
+                      <div style={{ display:'flex', justifyContent:'space-between', width:'100%', alignItems:'center', marginBottom:'1.2rem', position:'relative', zIndex:1 }}>
+                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke={!available?'#cbd5e1':isSelected?'white':'#2563eb'} strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        <span style={styles.roomBadge(available, isSelected)}>{available?'Available':'Occupied'}</span>
+                      </div>
+                      <div style={{ position:'relative', zIndex:1, width:'100%' }}>
+                        <p style={styles.roomNumber(isSelected,available)}>Room {num}</p>
+                        <span style={styles.roomCapacity(isSelected)}>Capacity: 2 beds</span>
+                        <button style={{ marginTop: '1.25rem', width: '100%', padding: '0.75rem', borderRadius: '12px', background: isSelected ? 'rgba(255,255,255,0.15)' : available ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent', color: isSelected ? 'white' : available ? '#2563eb' : 'transparent', fontWeight: 800, fontSize: '0.85rem', cursor: available ? 'pointer' : 'default', transition: 'all 0.25s ease', display: isSelected || available ? 'block' : 'none', border: isSelected ? '1px solid rgba(255,255,255,0.3)' : available ? '1px solid #bfdbfe' : 'none', letterSpacing: '0.02em' }}>{isSelected ? '✓ Room Selected' : 'Choose Room'}</button>
+                      </div>
+                    </div>
+                  ); })}</div></>)}
+                  {!roomsLoading && !roomsError && rooms.length>0 && (<div style={styles.roomsGrid}>{rooms.map(room => { const available=room.isAvailable!==false; const isSelected=selectedRoom?._id===room._id; return (
+                    <div key={room._id} className={available?'room-card-available':''} style={styles.roomCard(isSelected,available)} onClick={() => available&&setSelectedRoom(isSelected?null:room)}>
+                      {isSelected && <div style={{ position:'absolute', top:'-20px', right:'-20px', width:'80px', height:'80px', background:'rgba(255,255,255,0.1)', borderRadius:'50%' }}></div>}
+                      <div style={{ display:'flex', justifyContent:'space-between', width:'100%', alignItems:'center', marginBottom:'1.2rem', position:'relative', zIndex:1 }}>
+                        <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke={!available?'#cbd5e1':isSelected?'white':'#2563eb'} strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        <span style={styles.roomBadge(available, isSelected)}>{available?'Available':'Occupied'}</span>
+                      </div>
+                      <div style={{ position:'relative', zIndex:1, width:'100%' }}>
+                        <p style={styles.roomNumber(isSelected,available)}>Room {room.roomNumber}</p>
+                        <span style={styles.roomCapacity(isSelected)}>Capacity: {room.capacity||2} beds</span>
+                        <button style={{ marginTop: '1.25rem', width: '100%', padding: '0.75rem', borderRadius: '12px', background: isSelected ? 'rgba(255,255,255,0.15)' : available ? 'linear-gradient(135deg, #eff6ff, #dbeafe)' : 'transparent', color: isSelected ? 'white' : available ? '#2563eb' : 'transparent', fontWeight: 800, fontSize: '0.85rem', cursor: available ? 'pointer' : 'default', transition: 'all 0.25s ease', display: isSelected || available ? 'block' : 'none', border: isSelected ? '1px solid rgba(255,255,255,0.3)' : available ? '1px solid #bfdbfe' : 'none', letterSpacing: '0.02em' }}>{isSelected ? '✓ Room Selected' : 'Choose Room'}</button>
+                      </div>
+                    </div>
+                  ); })}</div>)}
+                  {!roomsLoading && (<div style={styles.bookingActionsRow}>
+                    <button className={selectedRoom && !myBooking ? 'book-btn' : ''} style={styles.bookRoomBtn(!selectedRoom||bookingLoading||myBooking)} onClick={handleBookRoom} disabled={!selectedRoom||bookingLoading||myBooking}>
+                      {bookingLoading ? <><span className="spin"><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg></span>Processing…</> : myBooking ? <><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Cancel Existing Booking First</> : <><svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>Book Selected Room</>}
+                    </button>
+                    {selectedRoom && <span style={styles.selectedRoomInfo}>Selected: <strong>Room {selectedRoom.roomNumber}</strong> · Block {selectedBlock}</span>}
+                  </div>)}
+
+
                 </div>
               </div>
             )}
